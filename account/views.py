@@ -1,12 +1,13 @@
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework.decorators import APIView, permission_classes
+from rest_framework.decorators import APIView, api_view
 from rest_framework import status
 from account.serializer import UserSerializer, UserProfileSerializer
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from account import models
+from rest_framework.authtoken.models import Token
 
 
 @api_view(["GET"])
@@ -44,8 +45,13 @@ class UserProfileInformation(viewsets.ModelViewSet):
 
         return queryset
 
-
+# logout user
 class LogoutUser(APIView):
-    def get(self):
-        self.request.user.auth_token.delete()
-        return Response({'detail':'user successfully logout'}, status.HTTP_200_OK)
+    def get(self, request):
+        try:
+            # Token.objects.filter(user=request.user).delete()
+            Token.objects.filter(user=request.user).delete()
+            return Response({'detail': 'user successfully logout'}, status.HTTP_200_OK)
+        except:
+            return Response({'detail': 'some thing went wrong'}, status.HTTP_400_BAD_REQUEST)
+

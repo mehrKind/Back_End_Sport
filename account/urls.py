@@ -12,5 +12,6 @@ app_name = "account"
 urlpatterns = [
     path("all_users", views.All_user, name="all_users"),
     path("user_info", include(router1.urls), name="user_info"),
-    path("user_profile", include(router_profile.urls), name="user_profile_info")
+    path("user_profile", include(router_profile.urls), name="user_profile_info"),
+    path("logout", views.LogoutUser.as_view(), name="user_logout")
 ]
