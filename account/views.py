@@ -45,6 +45,7 @@ class UserProfileInformation(viewsets.ModelViewSet):
 
         return queryset
 
+
 # logout user
 class LogoutUser(APIView):
     def get(self, request):
@@ -55,3 +56,19 @@ class LogoutUser(APIView):
         except:
             return Response({'detail': 'some thing went wrong'}, status.HTTP_400_BAD_REQUEST)
 
+
+# register user class POST method => 201_Created
+class RegisterUser(APIView):
+    def post(self, request, format=None):
+        # user models serialize
+        UserSerializerData = UserSerializer(data=request.data)
+        if UserSerializerData.is_valid():
+            userProfile = UserSerializerData.save()
+            userProfile.save()
+
+            return Response(UserSerializerData.data, status.HTTP_201_CREATED)
+        else:
+            return Response({"error": "user serializer is not valid"}, status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        return Response({"detail": "Authentication credentials were not provided."}, status.HTTP_401_UNAUTHORIZED)
