@@ -8,6 +8,7 @@ from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from account import models
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import AllowAny
 
 
 @api_view(["GET"])
@@ -59,16 +60,25 @@ class LogoutUser(APIView):
 
 # register user class POST method => 201_Created
 class RegisterUser(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
     def post(self, request, format=None):
         # user models serialize
         UserSerializerData = UserSerializer(data=request.data)
         if UserSerializerData.is_valid():
-            userProfile = UserSerializerData.save()
-            userProfile.save()
+            user = UserSerializerData.save()
+            user.save()
+
+            # create or update UserProfile
+            models.UserProfile.objects.update_or_create(
+                user=user,
+                defaults={
+                    'phoneNumber': request.data.get('phoneNumber', '')
+                }
+            )
 
             return Response(UserSerializerData.data, status.HTTP_201_CREATED)
         else:
+            print(UserSerializerData.errors)
             return Response({"error": "user serializer is not valid"}, status.HTTP_400_BAD_REQUEST)
-
-    def get(self, request):
-        return Response({"detail": "Authentication credentials were not provided."}, status.HTTP_401_UNAUTHORIZED)
