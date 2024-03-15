@@ -9,6 +9,9 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from account import models
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
+from random import randint
+from django.conf import settings
+from django.core.mail import send_mail
 
 
 @api_view(["GET"])
@@ -30,21 +33,29 @@ class UserInformation(viewsets.ModelViewSet):
         # get the current user
         user = self.request.user
 
-        queryset = User.objects.filter(username=user.username).values("username", "password", "first_name", "last_name",
+        queryset = User.objects.filter(username=user.username).values("id", "username", "password", "first_name", "last_name",
                                                                       "last_login", "date_joined")
 
         return queryset
 
 
 # show the all user information => accounts model
+
 class UserProfileInformation(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
 
     def get_queryset(self):
         user = self.request.user
         queryset = models.UserProfile.objects.filter(user=user).all()
-
         return queryset
+    def get_object(self):
+        return self.get_queryset().first()
+
+
+# show all profile information with user id
+class UserAllProfileInformation(viewsets.ModelViewSet):
+    queryset = models.UserProfile
+    serializer_class = UserProfileSerializer
 
 
 # logout user
@@ -82,3 +93,35 @@ class RegisterUser(APIView):
         else:
             print(UserSerializerData.errors)
             return Response({"error": "user serializer is not valid"}, status.HTTP_400_BAD_REQUEST)
+
+
+# password recovery
+
+class PasswordRecoveryViewSet(viewsets.ViewSet):
+    def create(self, request):
+        email = request.data.get('email')
+        if email:
+            random_number = randint(1000, 9999)
+            request.session['random_number'] = random_number
+            request.session['email'] = email
+            subject = "reset password"
+            message = "your message"
+            from_mail = settings.EMAIL_HOST_USER
+            to_list = ["pmehraban17@gmail.com", "erfanm1282@gmail.com"]
+            html_content = f"""
+            <h1 style="color:blue; text-align:center;">Welcome Back To The Step</h1>
+            <p>please enter this code</p>
+            <p style="color:black; font-weight:bold; text-align:center;">{random_number}</p>
+            """
+            send_mail(subject, message, from_mail, to_list, fail_silently=True, html_message=html_content)
+            return Response({'detail': 'Code sent'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk=None):
+        digit_number = request.data.get('digit')
+        if 'random_number' in request.session and int(digit_number) == request.session['random_number']:
+            return Response({'detail': 'Code is correct'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'Code is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+

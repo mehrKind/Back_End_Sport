@@ -7,5 +7,6 @@ router1.register("", views.ContactUsView, basename="ContactUsView")
 
 
 urlpatterns = [
-    path('', include(router1.urls), name="contactusView"),
+    # path('', include(router1.urls), name="contactusView"),
+    path("", views.main_api)
 ]
