@@ -12,6 +12,8 @@ from rest_framework.permissions import AllowAny
 from random import randint
 from django.conf import settings
 from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.hashers import make_password
 
 
 @api_view(["GET"])
@@ -80,7 +82,6 @@ class RegisterUser(APIView):
         if UserSerializerData.is_valid():
             user = UserSerializerData.save()
             user.save()
-
             # create or update UserProfile
             models.UserProfile.objects.update_or_create(
                 user=user,
@@ -102,7 +103,8 @@ class PasswordRecoveryViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
     def create(self, request):
         email = request.data.get('email')
-        if email:
+        user = get_object_or_404(User, email=email)
+        if user:
             random_number = randint(1000, 9999)
             request.session['random_number'] = random_number
             request.session['email'] = email
@@ -113,12 +115,14 @@ class PasswordRecoveryViewSet(viewsets.ViewSet):
             html_content = f"""
             <h1 style="color:blue; text-align:center;">Welcome Back To The Step</h1>
             <p style="text-align:center; margin:1.3rem 0; font-size:1.3rem ;">please enter this code</p>
-            <h1 style="color:white; background-color:black; border-radius: 20px; font-weight:bold; text-align:center;">{random_number}</h1>
+            <h1 style="color:white; background-color:black; border-radius: 20px; font-weight:bold; text-align:center;"
+            padding: 10px;>
+            {random_number}</h1>
             """
             send_mail(subject, message, from_mail, to_list, fail_silently=True, html_message=html_content)
             return Response({'detail': 'Code sent'}, status=status.HTTP_200_OK)
         else:
-            return Response({'detail': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'User Not Found'}, status=status.HTTP_404_NOT_FOUND)
 
     def update(self, request, pk=None):
         digit_number = request.data.get('digit')
@@ -127,3 +131,27 @@ class PasswordRecoveryViewSet(viewsets.ViewSet):
         else:
             return Response({'detail': 'Code is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ChangePassword(viewsets.ModelViewSet):
+    def create(self, request):
+        # get the password and the confirmation pass
+        new_password = request.data.get("new_password")
+        confirm_password = request.data.get("confirm_password")
+        email = request.session.get("email")
+
+        # check the password is same as its confirmation
+        if not new_password or not confirm_password:
+            return Response({"detail": "both password and confirm is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_password != confirm_password:
+            return Response({"detail": "password does not match"})
+
+        # find the user by email => if the user exists then change the password to the new password
+        # if the user not exists then return 404 not found status
+        user = User.objects.filter(email=email).first()
+        if user:
+            user.password = make_password(new_password)
+            user.save()
+            return Response({"detail": "password changed successfully"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)

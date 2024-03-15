@@ -14,6 +14,9 @@ allProfileRouter.register("", views.UserAllProfileInformation, basename="all_use
 restPassRouter = DefaultRouter()
 restPassRouter.register(r'password_recovery', views.PasswordRecoveryViewSet, basename='password_recovery')
 
+changePasswordRouter = DefaultRouter()
+changePasswordRouter.register(r'change_password', views.ChangePassword, basename="change_password")
+
 app_name = "account"
 urlpatterns = [
     path("all_users", views.All_user, name="all_users"),
@@ -22,5 +25,6 @@ urlpatterns = [
     path("user_all_profile", include(allProfileRouter.urls), name="user_profile_all"),
     path("register/", views.RegisterUser.as_view(), name="user_register"),
     path("", include(restPassRouter.urls)),
+    path("", include(changePasswordRouter.urls)),
     path("logout", views.LogoutUser.as_view(), name="user_logout")
 ]
