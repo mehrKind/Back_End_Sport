@@ -98,6 +98,8 @@ class RegisterUser(APIView):
 # password recovery
 
 class PasswordRecoveryViewSet(viewsets.ViewSet):
+    authentication_classes = []
+    permission_classes = [AllowAny]
     def create(self, request):
         email = request.data.get('email')
         if email:
@@ -107,11 +109,11 @@ class PasswordRecoveryViewSet(viewsets.ViewSet):
             subject = "reset password"
             message = "your message"
             from_mail = settings.EMAIL_HOST_USER
-            to_list = ["pmehraban17@gmail.com", "erfanm1282@gmail.com"]
+            to_list = [email]
             html_content = f"""
             <h1 style="color:blue; text-align:center;">Welcome Back To The Step</h1>
-            <p>please enter this code</p>
-            <p style="color:black; font-weight:bold; text-align:center;">{random_number}</p>
+            <p style="text-align:center; margin:1.3rem 0; font-size:1.3rem ;">please enter this code</p>
+            <h1 style="color:white; background-color:black; border-radius: 20px; font-weight:bold; text-align:center;">{random_number}</h1>
             """
             send_mail(subject, message, from_mail, to_list, fail_silently=True, html_message=html_content)
             return Response({'detail': 'Code sent'}, status=status.HTTP_200_OK)
