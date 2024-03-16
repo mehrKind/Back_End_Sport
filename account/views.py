@@ -112,12 +112,52 @@ class PasswordRecoveryViewSet(viewsets.ViewSet):
             message = "your message"
             from_mail = settings.EMAIL_HOST_USER
             to_list = [email]
+            # html content and the style for the code email
             html_content = f"""
-            <h1 style="color:blue; text-align:center;">Welcome Back To The Step</h1>
-            <p style="text-align:center; margin:1.3rem 0; font-size:1.3rem ;">please enter this code</p>
-            <h1 style="color:white; background-color:black; border-radius: 20px; font-weight:bold; text-align:center;"
-            padding: 10px;>
-            {random_number}</h1>
+            <html>
+            <head>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        background-color: #f4f4f4;
+                        margin: 0;
+                        padding: 0;
+                    }}
+                    .email-container {{
+                        width: 80%;
+                        margin: auto;
+                        background-color: white;
+                        padding: 20px;
+                        border-radius: 10px;
+                        text-align: center;
+                    }}
+                    .welcome-text {{
+                        color: #3498db;
+                        font-size: 2rem;
+                        margin-bottom: 20px;
+                    }}
+                    .instruction-text {{
+                        font-size: 1.2rem;
+                        margin-bottom: 30px;
+                    }}
+                    .code {{
+                        background-color: #333;
+                        color: #fff;
+                        padding: 10px;
+                        border-radius: 20px;
+                        font-size: 2rem;
+                        font-weight: bold;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="email-container">
+                    <h1 class="welcome-text">Welcome Back To The Step</h1>
+                    <p class="instruction-text">Please enter this code:</p>
+                    <h1 class="code">{random_number}</h1>
+                </div>
+            </body>
+            </html>
             """
             send_mail(subject, message, from_mail, to_list, fail_silently=True, html_message=html_content)
             return Response({'detail': 'Code sent'}, status=status.HTTP_200_OK)
@@ -133,6 +173,8 @@ class PasswordRecoveryViewSet(viewsets.ViewSet):
 
 
 class ChangePassword(viewsets.ModelViewSet):
+    # authentication_classes = []
+    permission_classes = [AllowAny]
     def create(self, request):
         # get the password and the confirmation pass
         new_password = request.data.get("new_password")
@@ -152,6 +194,11 @@ class ChangePassword(viewsets.ModelViewSet):
         if user:
             user.password = make_password(new_password)
             user.save()
+            # clear the request session data (sent code and the email address)
+            if 'random_number' in request.session:
+                del request.session['random_number']
+            if 'email' in request.session:
+                del request.session['email']
             return Response({"detail": "password changed successfully"}, status=status.HTTP_200_OK)
         else:
             return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)

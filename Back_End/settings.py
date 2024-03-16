@@ -61,10 +61,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ORIGIN_WHITELIST = [
     'http://127.0.0.1:5173',
-    'http://192.168.26.50:5173',
-    'http://192.168.42.6:5173',
-    'http://192.168.201.50:5173',
-    'http://192.168.201.50:8000',
+    'http://192.168.56.1:5173',
+    'http://192.168.56.1:8000',
     'http://0.0.0.0:8000',
     'http://localhost:5173'
     # Add other allowed origins as needed
@@ -163,3 +161,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=2),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=10),
 }
+
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+
