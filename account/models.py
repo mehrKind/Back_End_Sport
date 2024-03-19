@@ -27,9 +27,10 @@ class UserProfile(models.Model):
     city = models.CharField(max_length=200, null=True, blank=True)
     provinces = models.CharField(max_length=200, null=True, blank=True)
     sportPlaces = models.ManyToManyField(SportPlace)
+    purpesSteps = models.PositiveIntegerField()
 
-    def __str__(self):
-        return f"{self.user.username} -> {self.provinces} - {self.city}"
+    # def __str__(self):
+    #     return f"{self.user.username} -> {self.provinces} - {self.city}"
 
 
 class UserHealth(models.Model):
