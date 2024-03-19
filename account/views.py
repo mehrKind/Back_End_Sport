@@ -70,17 +70,18 @@ class LogoutUser(APIView):
         except:
             return Response({'detail': 'some thing went wrong'}, status.HTTP_400_BAD_REQUEST)
 
-
-# register user class POST method => 201_Created
 class RegisterUser(APIView):
+# register user class POST method => 201_Createdclass RegisterUser(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request, format=None):
         # user models serialize
         UserSerializerData = UserSerializer(data=request.data)
+        password = request.data.get("password")
         if UserSerializerData.is_valid():
             user = UserSerializerData.save()
+            user.set_password(password)  # Correct way to set password
             user.save()
             # create or update UserProfile
             models.UserProfile.objects.update_or_create(
@@ -94,6 +95,7 @@ class RegisterUser(APIView):
         else:
             print(UserSerializerData.errors)
             return Response({"error": "user serializer is not valid"}, status.HTTP_400_BAD_REQUEST)
+
 
 
 # password recovery
