@@ -57,7 +57,8 @@ class UserProfileInformation(viewsets.ModelViewSet):
 
 # show all profile information with user id
 class UserAllProfileInformation(viewsets.ModelViewSet):
-    queryset = models.UserProfile
+    permission_classes = [AllowAny]
+    queryset = models.UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
 
