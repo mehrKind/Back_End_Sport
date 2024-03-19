@@ -204,3 +204,8 @@ class ChangePassword(viewsets.ModelViewSet):
             return Response({"detail": "password changed successfully"}, status=status.HTTP_200_OK)
         else:
             return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class SaveSteps(viewsets.ModelViewSet):
+    def create(self, request):
+        pass
