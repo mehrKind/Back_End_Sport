@@ -8,12 +8,13 @@ from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from account import models
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser
 from random import randint
 from django.conf import settings
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import make_password
+from rest_framework.permissions import IsAuthenticated
 
 
 @api_view(["GET"])
@@ -206,3 +207,9 @@ class ChangePassword(viewsets.ModelViewSet):
             return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
+class SaveSteps(viewsets.ModelViewSet):
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return models.UserProfile.objects.filter(user=self.request.user)
