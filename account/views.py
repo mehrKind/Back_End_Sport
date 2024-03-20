@@ -15,6 +15,7 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import make_password
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import RetrieveUpdateAPIView
 
 
 @api_view(["GET"])
@@ -208,12 +209,12 @@ class ChangePassword(viewsets.ModelViewSet):
             return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class SaveSteps(viewsets.ModelViewSet):
+class SaveSteps(RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return models.UserProfile.objects.filter(user=self.request.user)
+    def get_object(self):
+        return models.UserProfile.objects.get(user=self.request.user)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
