@@ -214,3 +214,11 @@ class SaveSteps(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return models.UserProfile.objects.filter(user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)  # set partial=True to update a data partially
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
