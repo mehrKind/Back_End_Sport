@@ -1,11 +1,12 @@
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework.decorators import APIView, api_view
+from rest_framework.decorators import APIView, api_view, action
 from rest_framework import status
 from account.serializer import UserSerializer, UserProfileSerializer
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens  import RefreshToken
 from account import models
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAdminUser
@@ -64,14 +65,13 @@ class UserAllProfileInformation(viewsets.ModelViewSet):
 
 
 # logout user
-class LogoutUser(APIView):
-    def get(self, request):
-        try:
-            # Token.objects.filter(user=request.user).delete()
-            Token.objects.filter(user=request.user).delete()
-            return Response({'detail': 'user successfully logout'}, status.HTTP_200_OK)
-        except:
-            return Response({'detail': 'some thing went wrong'}, status.HTTP_400_BAD_REQUEST)
+class LogoutViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['post'])
+    def logout(self, request):
+        request.user.auth_token.delete()
+        return Response(status=status.HTTP_200_OK)
 
 class RegisterUser(APIView):
 # register user class POST method => 201_Createdclass RegisterUser(APIView):
@@ -82,6 +82,7 @@ class RegisterUser(APIView):
         # user models serialize
         UserSerializerData = UserSerializer(data=request.data)
         password = request.data.get("password")
+        username = request.data.get("username")
         if UserSerializerData.is_valid():
             user = UserSerializerData.save()
             user.set_password(password)  # Correct way to set password
@@ -94,7 +95,13 @@ class RegisterUser(APIView):
                 }
             )
 
-            return Response(UserSerializerData.data, status.HTTP_201_CREATED)
+            refresh = RefreshToken.for_user(user)
+            response = {
+                "refresh": str(refresh),
+                "access" : str(refresh.access_token)
+            }
+
+            return Response(response, status.HTTP_201_CREATED)
         else:
             print(UserSerializerData.errors)
             return Response({"error": "user serializer is not valid"}, status.HTTP_400_BAD_REQUEST)
