@@ -6,6 +6,7 @@ from .models import UserProfile, UserHealth, SportPlace
 
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "gender", "phoneNumber", "weight", "height")
+    search_fields = ["user__username", "phoneNumber", "city"]
     class Meta:
         model = UserProfile
         fields = "__all__"

@@ -66,7 +66,9 @@ CORS_ORIGIN_WHITELIST = [
     'http://192.168.201.50:8000',
     'http://192.168.56.1:8000',
     'http://0.0.0.0:8000',
-    'http://localhost:5173'
+    'http://localhost:5173',
+    "https://step.liara.run",
+    "https://fitme.liara.run"
     # Add other allowed origins as needed
 ]
 
@@ -99,7 +101,7 @@ WSGI_APPLICATION = 'Back_End.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'database/db.sqlite3',
     }
 }
 

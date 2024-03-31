@@ -221,10 +221,10 @@ class ChangePassword(viewsets.ModelViewSet):
 
         # check the password is same as its confirmation
         if not new_password or not confirm_password:
-            return Response({"detail": "both password and confirm is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"response":400, "data":"null", "error":"both password and confirm is required"}, status.HTTP_200_OK)
 
         if new_password != confirm_password:
-            return Response({"detail": "password does not match"})
+            return Response({"respons": 400, "data": "null", "error": "password does not match"}, status.HTTP_200_OK)
 
         # find the user by email => if the user exists then change the password to the new password
         # if the user not exists then return 404 not found status
@@ -239,7 +239,7 @@ class ChangePassword(viewsets.ModelViewSet):
                 del request.session['email']
             # response request data
             context = {
-                "respons": "200",
+                "respons": 200,
                 "data": "passworde changed successfully",
                 "error": "null"
             }
@@ -247,7 +247,7 @@ class ChangePassword(viewsets.ModelViewSet):
         else:
             # request respons error
             context = {
-                "respons": "404",
+                "respons": 404,
                 "data": "null",
                 "error": 'user not found'
             }
@@ -268,10 +268,10 @@ class SaveSteps(RetrieveUpdateAPIView):
             instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response({"respons": 200, "data": f"{serializer.data}", "error": "null"})
         context = {
-            "respons": "400",
+            "respons": 400,
             "data": "null",
             "error": f"{serializer.error}"
         }
-        return Response(context, status=status.HTTP_400_BAD_REQUEST)
+        return Response(context, status=status.HTTP_200_OK)

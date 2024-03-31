@@ -1,0 +1,8 @@
+{
+    "disks": [
+        {
+            "name": "step-database",
+            "mountTo": "database"
+        }
+    ]
+}
