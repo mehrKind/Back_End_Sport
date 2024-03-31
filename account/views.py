@@ -6,7 +6,7 @@ from account.serializer import UserSerializer, UserProfileSerializer
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.tokens  import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken
 from account import models
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAdminUser
@@ -24,9 +24,9 @@ def All_user(request: Request):
     if request.method == "GET":
         user_models = User.objects.all()
         serializeUser = UserSerializer(user_models, many=True)
-        return Response(serializeUser.data, status.HTTP_200_OK)
+        return Response({"respons": "200", "data": f"{serializeUser.data}", "error": "null"}, status.HTTP_200_OK)
     else:
-        return Response(None, status.HTTP_400_BAD_REQUEST)
+        return Response({"respons": "400", "data": "null", "error": "method not allowed"}, status.HTTP_200_OK)
 
 
 # show the user information => django User model
@@ -53,6 +53,7 @@ class UserProfileInformation(viewsets.ModelViewSet):
         user = self.request.user
         queryset = models.UserProfile.objects.filter(user=user).all()
         return queryset
+
     def get_object(self):
         return self.get_queryset().first()
 
@@ -73,8 +74,9 @@ class LogoutViewSet(viewsets.ViewSet):
         request.user.auth_token.delete()
         return Response(status=status.HTTP_200_OK)
 
+
 class RegisterUser(APIView):
-# register user class POST method => 201_Createdclass RegisterUser(APIView):
+    # register user class POST method => 201_Createdclass RegisterUser(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
@@ -98,14 +100,13 @@ class RegisterUser(APIView):
             refresh = RefreshToken.for_user(user)
             response = {
                 "refresh": str(refresh),
-                "access" : str(refresh.access_token)
+                "access": str(refresh.access_token)
             }
 
             return Response(response, status.HTTP_201_CREATED)
         else:
-            print(UserSerializerData.errors)
-            return Response({"error": "user serializer is not valid"}, status.HTTP_400_BAD_REQUEST)
-
+            # print(UserSerializerData.errors)
+            return Response({"status": "500", "data": "null", "error": "username is unique"}, status.HTTP_200_OK)
 
 
 # password recovery
@@ -113,6 +114,7 @@ class RegisterUser(APIView):
 class PasswordRecoveryViewSet(viewsets.ViewSet):
     authentication_classes = []
     permission_classes = [AllowAny]
+
     def create(self, request):
         email = request.data.get('email')
         user = get_object_or_404(User, email=email)
@@ -171,22 +173,46 @@ class PasswordRecoveryViewSet(viewsets.ViewSet):
             </body>
             </html>
             """
-            send_mail(subject, message, from_mail, to_list, fail_silently=True, html_message=html_content)
-            return Response({'detail': 'Code sent'}, status=status.HTTP_200_OK)
+            send_mail(subject, message, from_mail, to_list,
+                      fail_silently=True, html_message=html_content)
+            context = {
+                "status": "200",
+                "data": f"{random_number}",
+                "error": "null"
+            }
+            return Response(context, status=status.HTTP_200_OK)
         else:
-            return Response({'detail': 'User Not Found'}, status=status.HTTP_404_NOT_FOUND)
+            context = {
+                "status": "404",
+                "data": f"user not found",
+                "error": "null"
+            }
+            return Response(context, status=status.HTTP_200_OK)
 
     def update(self, request, pk=None):
+        # get the 4 digit numbr from request
         digit_number = request.data.get('digit')
+        # check if the given code is correct in the form
         if 'random_number' in request.session and int(digit_number) == request.session['random_number']:
-            return Response({'detail': 'Code is correct'}, status=status.HTTP_200_OK)
+            context = {
+                'status': '200',
+                "data": "code is correct",
+                "error": "null"
+            }
+            return Response(context, status=status.HTTP_200_OK)
         else:
-            return Response({'detail': 'Code is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+            context = {
+                'status': '404',
+                "data": "null",
+                "error": "Code is incorrect"
+            }
+            return Response(context, status=status.HTTP_200_OK)
 
 
 class ChangePassword(viewsets.ModelViewSet):
     # authentication_classes = []
     permission_classes = [AllowAny]
+
     def create(self, request):
         # get the password and the confirmation pass
         new_password = request.data.get("new_password")
@@ -211,9 +237,21 @@ class ChangePassword(viewsets.ModelViewSet):
                 del request.session['random_number']
             if 'email' in request.session:
                 del request.session['email']
-            return Response({"detail": "password changed successfully"}, status=status.HTTP_200_OK)
+            # response request data
+            context = {
+                "respons": "200",
+                "data": "passworde changed successfully",
+                "error": "null"
+            }
+            return Response(context, status=status.HTTP_200_OK)
         else:
-            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            # request respons error
+            context = {
+                "respons": "404",
+                "data": "null",
+                "error": 'user not found'
+            }
+            return Response(context, status=status.HTTP_200_OK)
 
 
 class SaveSteps(RetrieveUpdateAPIView):
@@ -225,8 +263,15 @@ class SaveSteps(RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)  # set partial=True to update a data partially
+        # set partial=True to update a data partially
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        context = {
+            "respons": "400",
+            "data": "null",
+            "error": f"{serializer.error}"
+        }
+        return Response(context, status=status.HTTP_400_BAD_REQUEST)

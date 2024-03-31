@@ -5,16 +5,29 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>STEP</title>
+    <style>
+        body{
+            background: #050a30;
+        }
+
+        .setp{
+            position: absolute;
+            margin-left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .setp h1{
+            color:#fff;
+            font-size: 7rem;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+    </style>
 </head>
 <body>
-    <h1><a href='/admin'>Admin Panel</a></h1>
-    <h1>this is the forget password page</h1>
-    <form method="POST">
-        {% csrf_token %}
-        <input type="number" placeholder="Enter the 4 digit code" name="digit">
-        <button type="submit">Send Code</button>
-    </form>
-
+    <!-- <h1><a href='/admin'>Admin Panel</a></h1> -->
+    <div class="setp">
+       <h1>STEP</h1>
+    </div>
 </body>
 </html>

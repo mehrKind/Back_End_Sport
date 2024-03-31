@@ -1,6 +1,11 @@
 from django.urls import path, include
 from . import views
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView
+)
+
 
 router1 = DefaultRouter()
 router1.register("", views.UserInformation, basename="user_information")
@@ -24,13 +29,14 @@ changePasswordRouter.register(r'change_password', views.ChangePassword, basename
 
 app_name = "account"
 urlpatterns = [
+    path(f'login/', TokenObtainPairView.as_view(), name='token_obtain_pair'), # token
     path("all_users", views.All_user, name="all_users"),
     path("user_info", include(router1.urls), name="user_info"),
     path("user_profile", include(router_profile.urls), name="user_profile_info"),
     path("user_all_profile", include(allProfileRouter.urls)),
     path("register/", views.RegisterUser.as_view(), name="user_register"),
     path("save_step/", views.SaveSteps.as_view()),
-    path("", include(logoutRouter.urls), name="user_logout"),  # Move this line up
     path("", include(restPassRouter.urls)),
     path("", include(changePasswordRouter.urls)),
+    path("", include(logoutRouter.urls)),  # Move this line up
 ]
