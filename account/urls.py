@@ -36,6 +36,7 @@ urlpatterns = [
     path("user_all_profile", include(allProfileRouter.urls)),
     path("register/", views.RegisterUser.as_view(), name="user_register"),
     path("save_step/", views.SaveSteps.as_view()),
+    path("referrer-score/", views.referrerScore.as_view(), name="referrer_score"),
     path("", include(restPassRouter.urls)),
     path("", include(changePasswordRouter.urls)),
     path("", include(logoutRouter.urls)),  # Move this line up
