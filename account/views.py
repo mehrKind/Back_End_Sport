@@ -23,9 +23,9 @@ def All_user(request: Request):
     if request.method == "GET":
         user_models = User.objects.all()
         serializeUser = UserSerializer(user_models, many=True)
-        return Response({"respons": 200, "data": f"{serializeUser.data}", "error": "null"}, status.HTTP_200_OK)
+        return Response({"status": 200, "data": f"{serializeUser.data}", "error": "null"}, status.HTTP_200_OK)
     else:
-        return Response({"respons": 400, "data": "null", "error": "method not allowed"}, status.HTTP_200_OK)
+        return Response({"status": 400, "data": "null", "error": "method not allowed"}, status.HTTP_200_OK)
 
 
 # show the user information => django User model
@@ -61,7 +61,7 @@ class UserProfileInformation(viewsets.ModelViewSet):
 
 
 # show all profile information with user id
-#todo: NEW UPDATE
+# todo: NEW UPDATE
 class UserAllProfileInformation(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     serializer_class = UserProfileSerializer
@@ -252,10 +252,10 @@ class ChangePassword(viewsets.ModelViewSet):
 
         # check the password is same as its confirmation
         if not new_password or not confirm_password:
-            return Response({"respons": 400, "data": "null", "error": "both password and confirm is required"}, status.HTTP_200_OK)
+            return Response({"status": 400, "data": "null", "error": "both password and confirm is required"}, status.HTTP_200_OK)
 
         if new_password != confirm_password:
-            return Response({"respons": 400, "data": "null", "error": "password does not match"}, status.HTTP_200_OK)
+            return Response({"status": 400, "data": "null", "error": "password does not match"}, status.HTTP_200_OK)
 
         # find the user by email => if the user exists then change the password to the new password
         user = User.objects.filter(email=email).first()
@@ -298,9 +298,9 @@ class SaveSteps(RetrieveUpdateAPIView):
             instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"respons": 200, "data": f"{serializer.data}", "error": "null"})
+            return Response({"status": 200, "data": serializer.data, "error": "null"})
         context = {
-            "respons": 400,
+            "status": 400,
             "data": "null",
             "error": f"{serializer.error}"
         }
@@ -323,10 +323,17 @@ class referrerScore(APIView):
                 referrer_code=referrer_code)
             # gift score number to add
             GiftScore = 100
+            first_score = userProfile.score
             userProfile.score += GiftScore
             # update the score field and the some of the score and the  giftScore
             userProfile.save(update_fields=['score'])
-            return Response({"respons": 200, "data": f"{referrer_code}", "error": "null"}, status.HTTP_200_OK)
+            data_context = {
+                "code": referrer_code,
+                "gift_score": GiftScore,
+                "first_score": first_score,
+                "updated_score": userProfile.score
+            }
+            return Response({"status": 200, "data": data_context, "error": "null"}, status.HTTP_200_OK)
         # if there was no person to be the owner of the code OR if the code is not exist
         except ObjectDoesNotExist as e:
             return Response({"status": 404, "data": "null", "error": str(e)}, status.HTTP_200_OK)
