@@ -5,9 +5,11 @@ from . import models
 
 # showe user profile
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "gender", "phoneNumber", "weight", "height")
+    list_display = ("user", "gender", "phoneNumber", "birth_date","weight", "height")
     # search the table with the feilds
     search_fields = ["user__username", "phoneNumber", "city"]
+    list_editable = ["phoneNumber", "gender"]
+    list_filter = ["score", "gender"]
     class Meta:
         model = models.UserProfile
         fields = "__all__"
