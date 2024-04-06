@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %} {{user.username}}'s Admin panel {% endblock %}
+
+{% block extrahead %}
+    <!-- <link rel="stylesheet" type="text/css" href="{% static 'custom_admin.css' %}"> -->
+    <style>
+        #header {
+            background: #7B61FF !important;
+        }
+        .breadcrumbs{
+            background-color: rgb(123, 111, 255) !important;
+        }
+        caption{
+            background-color: #6759ff !important;
+        }
+        input[type="submit"]{
+            background: #7B61FF !important;
+        }
+    </style>
+{% endblock %}
+
+<!-- logo -->
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">Step Application</a></h1>
+{% endblock %}
+
+<!-- customise my name -->
+{% block extrastyle %}
+    <style>
+        #content-main h1 { display: none; }
+        #content-main::before {
+            content: '{{user.username}}❤';
+            font-size: 36px;
+            margin-top: 12px;
+            margin-bottom: 12px;
+        }
+    </style>
+{% endblock %}

@@ -10,5 +10,6 @@ daily_router.register(r"daily_info", views.UserDailyView, basename="daily_info")
 
 
 urlpatterns = [
-    path("", include(daily_router.urls))
+    path("", include(daily_router.urls)),
+    path("history_user", views.HistoryView.as_view()),
 ]
