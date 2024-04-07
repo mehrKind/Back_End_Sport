@@ -21,7 +21,9 @@ class UserDailyView(viewsets.ModelViewSet):
 
     # add daily work
     def create(self, request):
-        DailySerializer = self.get_serializer(data = request.data)
+        data = request.data.copy()
+        data['user'] = request.user.id
+        DailySerializer = self.get_serializer(data = data)
         if DailySerializer.is_valid():
             DailySerializer.save()
             context = {

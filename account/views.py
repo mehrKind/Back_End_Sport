@@ -28,19 +28,27 @@ def All_user(request: Request):
         return Response({"status": 400, "data": "null", "error": "method not allowed"}, status.HTTP_200_OK)
 
 
-# show the user information => django User model
-class UserInformation(viewsets.ModelViewSet):
-    serializer_class = UserSerializer
-    authentication_classes = [JWTAuthentication]
 
-    def get_queryset(self):
-        # get the current user
-        user = self.request.user
+class UserInformation(APIView):
+    def get(self, request, format=None):
+        try:
+            # Query the User model
+            user = User.objects.filter(username=request.user.username).first()
+            # Query the UserProfile model
+            user_profile = models.UserProfile.objects.filter(user=request.user).first()
 
-        queryset = User.objects.filter(username=user.username).values("id", "username", "password", "first_name", "last_name",
-                                                                      "last_login", "date_joined")
+            # Serialize the data
+            user_serializer = UserSerializer(user)
+            user_profile_serializer = UserProfileSerializer(user_profile)
 
-        return queryset
+            # Combine the serialized data
+            combined_data = {**user_serializer.data, **user_profile_serializer.data}
+
+            return Response({"status":200, "data":combined_data, "error":"null"}, status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"status":500, "data":None, "error":str(e)}, status.HTTP_200_OK)
+
+
 
 
 # show the all user information => accounts model

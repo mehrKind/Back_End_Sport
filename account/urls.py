@@ -7,8 +7,8 @@ from rest_framework_simplejwt.views import (
 )
 
 
-router1 = DefaultRouter()
-router1.register("", views.UserInformation, basename="user_information")
+# router1 = DefaultRouter()
+# router1.register("", views.UserInformation, basename="user_information")
 
 router_profile = DefaultRouter()
 router_profile.register("", views.UserProfileInformation, basename="user_profile")
@@ -31,7 +31,7 @@ app_name = "account"
 urlpatterns = [
     path(f'login/', TokenObtainPairView.as_view(), name='token_obtain_pair'), # token
     path("all_users", views.All_user, name="all_users"),
-    path("user_info", include(router1.urls), name="user_info"),
+    path("user_info", views.UserInformation.as_view(), name="user_info"),
     path("user_profile", include(router_profile.urls), name="user_profile_info"),
     path("user_all_profile", include(allProfileRouter.urls)),
     path("register/", views.RegisterUser.as_view(), name="user_register"),
