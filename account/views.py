@@ -87,15 +87,6 @@ class UserAllProfileInformation(viewsets.ModelViewSet):
             return Response({"status": 404, "data": "null", "error": str(e)}, status.HTTP_200_OK)
 
 
-# logout user
-class LogoutViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
-
-    @action(detail=False, methods=['post'])
-    def logout(self, request):
-        request.user.auth_token.delete()
-        return Response(status=status.HTTP_200_OK)
-
 # registerUser
 
 
@@ -300,19 +291,35 @@ class SaveSteps(RetrieveUpdateAPIView):
         return models.UserProfile.objects.get(user=self.request.user)
 
     def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        # set partial=True to update a data partially
-        serializer = self.get_serializer(
-            instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status": 200, "data": serializer.data, "error": "null"})
-        context = {
-            "status": 400,
-            "data": "null",
-            "error": f"{serializer.error}"
-        }
-        return Response(context, status=status.HTTP_200_OK)
+        try:
+            instance = self.get_object()
+            # set partial=True to update a data partially
+            serializer = self.get_serializer(
+                instance, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                profileDone = None
+                getWeight = request.data.get("weight")
+                if getWeight is None or getWeight == "null":
+                    profileDone = False
+                else:
+                    profileDone = True
+
+                context = {**serializer.data, **{"profileDone":profileDone}} # add profile is done to serializer data
+                return Response({"status": 200, "data": context, "error": "null"})
+            context = {
+                "status": 400,
+                "data": "null",
+                "error": f"{serializer.error}"
+            }
+            return Response(context, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            context = {
+                "status": 500,
+                "data":"null",
+                "error": "profile for this user has not created yet :)"
+            }
+            return Response(context, status.HTTP_200_OK)
 
 
 # referrer score
@@ -331,7 +338,9 @@ class referrerScore(APIView):
                 referrer_code=referrer_code)
             # gift score number to add
             GiftScore = 100
+            # get the first score of the user
             first_score = userProfile.score
+            # TODO: calculate the user score for 3 days
             userProfile.score += GiftScore
             # update the score field and the some of the score and the  giftScore
             userProfile.save(update_fields=['score'])

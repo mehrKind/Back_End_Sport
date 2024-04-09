@@ -13,9 +13,6 @@ from rest_framework_simplejwt.views import (
 router_profile = DefaultRouter()
 router_profile.register("", views.UserProfileInformation, basename="user_profile")
 
-logoutRouter = DefaultRouter()
-logoutRouter.register(r"logout", views.LogoutViewSet, basename="logout")
-
 allProfileRouter = DefaultRouter()
 allProfileRouter.register("", views.UserAllProfileInformation, basename="all_user_profile")
 
@@ -38,6 +35,5 @@ urlpatterns = [
     path("save_step/", views.SaveSteps.as_view()),
     path("referrer-score/", views.referrerScore.as_view(), name="referrer_score"),
     path("", include(restPassRouter.urls)),
-    path("", include(changePasswordRouter.urls)),
-    path("", include(logoutRouter.urls)),  # Move this line up
+    path("", include(changePasswordRouter.urls))
 ]
