@@ -40,9 +40,13 @@ class UserInformation(APIView):
             # Serialize the data
             user_serializer = UserSerializer(user)
             user_profile_serializer = UserProfileSerializer(user_profile)
-
+            userProfile = None
+            if user_profile_serializer.data["weight"] is None:
+                userProfile = False
+            else:
+                userProfile = True
             # Combine the serialized data
-            combined_data = {**user_serializer.data, **user_profile_serializer.data}
+            combined_data = {**user_serializer.data, **user_profile_serializer.data, "userProfile": userProfile}
 
             return Response({"status":200, "data":combined_data, "error":"null"}, status.HTTP_200_OK)
         except Exception as e:

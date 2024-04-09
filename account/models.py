@@ -47,7 +47,7 @@ class UserProfile(models.Model):
     provinces = models.CharField(max_length=200, null=True, blank=True)
     sportPlaces = models.ManyToManyField(SportPlace)
     weeklyGoal = models.CharField(choices=WEEKLY_GOALS, max_length=100, null=True)
-    purposeSteps = models.PositiveIntegerField(null=True)
+    purposeSteps = models.PositiveIntegerField(null=True, default = 5000)
     boostUser = models.ManyToManyField(BoostUser)
     userProblem = models.TextField(null=True, blank=True)
     referrer_code = models.CharField(default=generate_referrer_code, max_length=7)
