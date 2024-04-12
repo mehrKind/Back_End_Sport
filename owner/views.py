@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from owner import serializer
 from owner import models
 from account.models import UserProfile
-from django.contrib.auth.models import User
+from account.serializer import UserProfileSerializer
 from  rest_framework.decorators import APIView
 
 
@@ -61,3 +61,17 @@ class HistoryView(APIView):
                 "error": str(e)
             }
             return Response(context, status=status.HTTP_200_OK)
+        
+
+
+class Challenge(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        queryset = UserProfile.objects.all().order_by("-score")
+        challengeSerializer = UserProfileSerializer(queryset, many=True)
+        context = {
+            "status":200,
+            "data": challengeSerializer.data,
+            "error":"null"
+        }
+        return Response(context, status.HTTP_200_OK)
