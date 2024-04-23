@@ -5,43 +5,44 @@ from rest_framework.permissions import AllowAny
 from owner import serializer
 from owner import models
 from account.models import UserProfile
-from account.serializer import UserProfileSerializer
-from  rest_framework.decorators import APIView
-
+from account.serializer import UserProfileSerializer, UserSerializer
+from rest_framework.decorators import APIView
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
 
 # create a model for the daily user working: create and update
-class UserDailyView(viewsets.ModelViewSet):
-    # permission_classes = [AllowAny]
-    serializer_class = serializer.DailyInfoSerializer
 
-    def get_queryset(self):
-        # replace models.DailyInfo with your actual model
-        # add your logic here
-        return models.DailyInfo.objects.filter(user = self.request.user)
+class UserDailyView(APIView):
+    def get(self, request, format=None):
+        queryset = models.DailyInfo.objects.filter(user=request.user)
+        serializer = serializer.DailyInfoSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-    # add daily work
-    def create(self, request):
+    def post(self, request, format=None):
         data = request.data.copy()
         data['user'] = request.user.id
-        DailySerializer = self.get_serializer(data = data)
-        if DailySerializer.is_valid():
-            DailySerializer.save()
-            context = {
-                "status": 200,
-                "data":f"{DailySerializer.data}",
-                "error":"null"
-            }
-            return Response(context, status.HTTP_200_OK)
-        else:
-            context = {
-                "status": 400,
-                "data":"null",
-                "error": f"{DailySerializer.errors}"
-            }
-            return Response(context, status.HTTP_200_OK)
+        serializer = serializer.DailyInfoSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def put(self, request, format=None):
+        queryset = models.DailyInfo.objects.filter(user=request.user)
+        filter_kwargs = {
+            'user': request.user,
+            'dayDate': request.data.get('dayDate', timezone.now().date())
+        }
+        instance = get_object_or_404(queryset, **filter_kwargs)
+        serializer = serializer.DailyInfoSerializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# history
+# history 
 class HistoryView(APIView):
     def get(self, request, format=None):
         try:
@@ -69,9 +70,13 @@ class Challenge(APIView):
     def get(self, request):
         queryset = UserProfile.objects.all().order_by("-score")
         challengeSerializer = UserProfileSerializer(queryset, many=True)
+        userQueryset = User.objects.values("username", "first_name")
+        userChallengeSerializer = UserSerializer(userQueryset, many=True)
+        data = challengeSerializer.data + userChallengeSerializer.data
         context = {
             "status":200,
-            "data": challengeSerializer.data,
+            "data": data,
             "error":"null"
         }
         return Response(context, status.HTTP_200_OK)
+

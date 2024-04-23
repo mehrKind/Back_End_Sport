@@ -5,12 +5,8 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
 )
 
-daily_router = DefaultRouter()
-daily_router.register(r"daily_info", views.UserDailyView, basename="daily_info")
-
-
 urlpatterns = [
-    path("", include(daily_router.urls)),
+    path("daily_info/", views.UserDailyView.as_view()),
     path("history_user", views.HistoryView.as_view()),
     path("challenge", views.Challenge.as_view())
 ]
