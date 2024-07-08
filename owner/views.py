@@ -80,3 +80,11 @@ class Challenge(APIView):
         }
         return Response(context, status.HTTP_200_OK)
 
+class saveDalyInfo(APIView):
+    data = ""
+
+    context = {
+        "statuse": 200,
+        "data": data,
+        "error": "null"
+    }
