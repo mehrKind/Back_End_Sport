@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from owner import serializer
 from owner import models
 from account.models import UserProfile
-from account.serializer import UserProfileSerializer, UserSerializer
+from account.serializer import UserProfileSerializer, UserSerializer, UserProfileSerializer2
 from rest_framework.decorators import APIView
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -102,15 +102,24 @@ class HistoryView(APIView):
 
 class Challenge(APIView):
     permission_classes = [AllowAny]
+
     def get(self, request):
+        # queryset = UserProfile.objects.all().order_by("-score")
         queryset = UserProfile.objects.all().order_by("-score")
-        challengeSerializer = UserProfileSerializer(queryset, many=True)
-        userQueryset = User.objects.values("username", "first_name")
+        challengeSerializer = UserProfileSerializer2(queryset, many=True)
+        userQueryset = User.objects.values("username", "first_name", "last_login")
         userChallengeSerializer = UserSerializer(userQueryset, many=True)
-        data = challengeSerializer.data + userChallengeSerializer.data
+        # merge two dics togather
+        merged_data = []
+        for profile, user in zip(challengeSerializer.data, userChallengeSerializer.data):
+            merged_item = profile.copy()
+            merged_item.update(user)
+            merged_data.append(merged_item)
+
         context = {
-            "status":200,
-            "data": data,
-            "error":"null"
+            "status": 200,
+            "data": merged_data,
+            "error": "null"
         }
-        return Response(context, status.HTTP_200_OK)
+
+        return Response(context, status=status.HTTP_200_OK)

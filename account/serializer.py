@@ -13,3 +13,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserProfile
         fields = '__all__'
+        
+class UserProfileSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserProfile
+        fields = ['score']  # Add other fields you want to include here
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Add handling for missing fields here if needed
+        return data
