@@ -17,17 +17,42 @@ from django.shortcuts import get_object_or_404
 class UserDailyView(APIView):
     def get(self, request, format=None):
         queryset = models.DailyInfo.objects.filter(user=request.user)
-        serializer = serializer.DailyInfoSerializer(queryset, many=True)
-        return Response(serializer.data)
-
+        # check if there is any daily work exist or not
+        if queryset:
+            serializer_ = serializer.DailyInfoSerializer(queryset, many=True)
+            context = {
+                "status" : 200,
+                "data" : serializer_.data,
+                "error" : "null"
+            }
+            return Response(context, status.HTTP_200_OK)
+        # if there was no item in the database for daily informaion
+        else:
+            context = {
+                "status":404,
+                "data" : "null",
+                "error": "no daily work were found :)"
+            }
+            return Response(context, status.HTTP_200_OK)
+    # create daily work
     def post(self, request, format=None):
         data = request.data.copy()
         data['user'] = request.user.id
-        serializer = serializer.DailyInfoSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer_ = serializer.DailyInfoSerializer(data=data)
+        if serializer_.is_valid():
+            serializer_.save()
+            context = {
+                "status" : 200,
+                "data" : serializer_.data,
+                "error" : "null"
+            }
+            return Response(context ,status=status.HTTP_200_OK)
+        context = {
+            "status" : 400,
+            "data": "null",
+            "error" : serializer_.errors
+        }
+        return Response(context, status=status.HTTP_200_OK)
 
     def put(self, request, format=None):
         queryset = models.DailyInfo.objects.filter(user=request.user)
@@ -36,13 +61,23 @@ class UserDailyView(APIView):
             'dayDate': request.data.get('dayDate', timezone.now().date())
         }
         instance = get_object_or_404(queryset, **filter_kwargs)
-        serializer = serializer.DailyInfoSerializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer_ = serializer.DailyInfoSerializer(instance, data=request.data, partial=True)
+        if serializer_.is_valid():
+            serializer_.save()
+            context = {
+                "status" : 200,
+                "data" : serializer_.data,
+                "error" : "null"
+            }
+            return Response(context, status.HTTP_200_OK)
+        context = {
+            "status" : 400,
+            "data": "null",
+            "error" : serializer_.errors
+        }
+        return Response(context, status=status.HTTP_400_BAD_REQUEST)
 
-# history 
+# history workout
 class HistoryView(APIView):
     def get(self, request, format=None):
         try:
@@ -79,12 +114,3 @@ class Challenge(APIView):
             "error":"null"
         }
         return Response(context, status.HTTP_200_OK)
-
-class saveDalyInfo(APIView):
-    data = ""
-
-    context = {
-        "statuse": 200,
-        "data": data,
-        "error": "null"
-    }

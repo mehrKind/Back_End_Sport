@@ -22,8 +22,8 @@ EMAIL_USE_TLS = True  # or False if you're not using TLS
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 
-# ALLOWED_HOSTS = ['127.0.0.1', '192.168.26.50', 'localhost', '0.0.0.0', '192.168.42.6', '192.168.42.50',
-# '192.168.201.50']
+ALLOWED_HOSTS = ['127.0.0.1', '192.168.26.50', 'localhost', '0.0.0.0', '192.168.42.6', '192.168.42.50',
+'192.168.201.50', '192.168.105.50']
 ALLOWED_HOSTS = ['*']
 
 
