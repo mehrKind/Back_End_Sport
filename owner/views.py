@@ -62,42 +62,46 @@ class UserDailyView(APIView):
             'dayDate': request.data.get('dayDate', timezone.now().date())
         }
         instance = get_object_or_404(queryset, **filter_kwargs)
-        # Update the instance attributes by summing them with the values from request.data
-        request.data["calory"] = instance.calory + request.data.get("calory", 0)
-        request.data["completeStep"] = instance.completeStep + request.data.get("completeStep", 0)
-        request.data["traveledDistance"] = instance.traveledDistance + request.data.get("traveledDistance", 0)
-        # Get the last traveled time from the database
-        last_traveled_time = instance.traveledTime
+        # if there was as item with the given date and user, update it. otherwise, call the post method
+        if queryset.exists():
+            # Update the instance attributes by summing them with the values from request.data
+            request.data["calory"] = instance.calory + request.data.get("calory", 0)
+            request.data["completeStep"] = instance.completeStep + request.data.get("completeStep", 0)
+            request.data["traveledDistance"] = instance.traveledDistance + request.data.get("traveledDistance", 0)
+            # Get the last traveled time from the database
+            last_traveled_time = instance.traveledTime
 
-        # Convert the time object to datetime for addition with timedelta
-        last_traveled_datetime = datetime.combine(datetime.min, last_traveled_time)
+            # Convert the time object to datetime for addition with timedelta
+            last_traveled_datetime = datetime.combine(datetime.min, last_traveled_time)
 
-        # Calculate the new traveled time by adding minutes and seconds
-        new_traveled_datetime = last_traveled_datetime + timedelta(minutes=request.data.get("travelMinutes", 0), seconds=request.data.get("travelSeconds", 0))
+            # Calculate the new traveled time by adding minutes and seconds
+            new_traveled_datetime = last_traveled_datetime + timedelta(minutes=request.data.get("travelMinutes", 0), seconds=request.data.get("travelSeconds", 0))
 
-        # Extract the time component from the datetime object
-        new_traveled_time = new_traveled_datetime.time()
+            # Extract the time component from the datetime object
+            new_traveled_time = new_traveled_datetime.time()
 
-        request.data["traveledTime"] = new_traveled_time
-        
-        if instance.totalStep <= instance.completeStep:
-            print("yess")
-        
-        serializer_ = serializer.DailyInfoSerializer(instance, data=request.data, partial=True)
-        if serializer_.is_valid():
-            serializer_.save()
+            request.data["traveledTime"] = new_traveled_time
+            
+            if instance.totalStep <= instance.completeStep:
+                print("yess")
+            
+            serializer_ = serializer.DailyInfoSerializer(instance, data=request.data, partial=True)
+            if serializer_.is_valid():
+                serializer_.save()
+                context = {
+                    "status": 200,
+                    "data": serializer_.data,
+                    "error": None
+                }
+                return Response(context, status=status.HTTP_200_OK)
             context = {
-                "status": 200,
-                "data": serializer_.data,
-                "error": None
+                "status": 400,
+                "data": None,
+                "error": serializer_.errors
             }
             return Response(context, status=status.HTTP_200_OK)
-        context = {
-            "status": 400,
-            "data": None,
-            "error": serializer_.errors
-        }
-        return Response(context, status=status.HTTP_200_OK)
+        else:
+            return self.post(request, format=format)
 
 # history workout
 class HistoryView(APIView):

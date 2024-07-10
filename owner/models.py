@@ -10,7 +10,7 @@ class DailyInfo(models.Model):
     traveledDistance = models.FloatField()
     calory = models.PositiveIntegerField()
     traveledTime = models.TimeField()
-    dayDate = models.DateField()
+    dayDate = models.DateField(auto_now_add=True)
     dailyExercise = models.BooleanField(default = False)
     @property
     def totalStep(self):

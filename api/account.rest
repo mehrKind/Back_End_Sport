@@ -1,0 +1,6 @@
+POST url https://step.liara.run/api/v1/accounts/login/
+header name: header value
+{
+    "username" : "admin",
+    "password" : "123456"
+}
