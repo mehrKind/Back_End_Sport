@@ -23,7 +23,10 @@ class UserDailyView(APIView):
             serializer_ = serializer.DailyInfoSerializer(queryset, many=True)
             context = {
                 "status" : 200,
-                "data" : serializer_.data,
+                "data" : {
+                    "is_firstTime" : False,
+                    "values" : serializer_.data
+                    },
                 "error" : "null"
             }
             return Response(context, status.HTTP_200_OK)
@@ -31,7 +34,7 @@ class UserDailyView(APIView):
         else:
             context = {
                 "status":404,
-                "data" : "null",
+                "data" : {"is_firstTime" : True, "value" : []},
                 "error": "no daily work were found :)"
             }
             return Response(context, status.HTTP_200_OK)
