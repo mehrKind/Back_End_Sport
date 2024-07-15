@@ -12,6 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from datetime import timedelta, datetime, time
+from django.db.models import Sum
 
 # create a model for the daily user working: create and update
 
@@ -107,19 +108,36 @@ class UserDailyView(APIView):
             return self.post(request, format=format)
 
 # history workout
+
 class HistoryView(APIView):
+    # get method to have all user history, sum details and all daily work 
     def get(self, request, format=None):
         try:
-            queryset = models.DailyInfo.objects.all().order_by("-dayDate").filter(user = request.user)  # Fetch the data from your model
-            Historyserializer = serializer.DailyInfoSerializer(queryset, many=True)
+            queryset = models.DailyInfo.objects.filter(user=request.user).order_by("-dayDate") # get and sort (date) data from daily table
+            Historyserializer = serializer.DailyInfoSerializer(queryset, many=True) # make the last data as json (serialize)
+            # sum columns
+            totalSteps = queryset.aggregate(Sum('completeStep'))['completeStep__sum'] or 0
+            totalDistance = queryset.aggregate(Sum('traveledDistance'))['traveledDistance__sum'] or 0
+            totalCalory = queryset.aggregate(Sum('calory'))['calory__sum'] or 0
+            
+            total_time_seconds = sum([(td.traveledTime.hour * 3600 + td.traveledTime.minute * 60 + td.traveledTime.second) for td in queryset])
+
+            total_time_minutes = total_time_seconds // 60
+            total_time_seconds %= 60
+
             context = {
                 "status": 200,
-                "data": Historyserializer.data,
+                "data": {
+                    "totalSteps": totalSteps,
+                    "totalDistance": totalDistance,
+                    "totalCalory": totalCalory,
+                    "totalTime": f"{total_time_minutes}:{total_time_seconds:02d}",
+                    "values": Historyserializer.data
+                },
                 "error": "null"
             }
             return Response(context, status=status.HTTP_200_OK)
         except Exception as e:
-            # Create a context with the error message
             context = {
                 "status": 500,
                 "data": "null",
@@ -127,7 +145,24 @@ class HistoryView(APIView):
             }
             return Response(context, status=status.HTTP_200_OK)
         
-
+    def delete(self, request, pk, format=None):
+        try:
+            activity = get_object_or_404(models.DailyInfo, pk=pk, user = request.user)
+            activity.delete()
+            context = {
+                "status": 204,
+                "data": f"activity with id : {pk} was deleted successfully",
+                "error": "null" 
+            }
+            return Response(context, status=status.HTTP_200_OK)
+        except Exception as e:
+            context = {
+                "status": 400,
+                "data": "null",
+                "error": str(e)
+            }
+            return Response(context, status=status.HTTP_200_OK)
+        
 
 class Challenge(APIView):
     permission_classes = [AllowAny]
