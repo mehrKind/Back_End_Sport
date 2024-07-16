@@ -113,23 +113,39 @@ class UserDayInofo(APIView):
     def post(self, request, format=None):
         given_date = request.data.get("date")
         queryset = models.DailyInfo.objects.all().filter(dayDate = given_date)
-        serializer_ = serializer.DailyInfoSerializer(queryset, many=True)
-        context = {
-            "status": 200,
-            "data": serializer_.data,
-            "error": "null"
-        }
-        return Response(context, status=status.HTTP_200_OK)
+        if queryset:
+            serializer_ = serializer.DailyInfoSerializer(queryset, many=True)
+            context = {
+                "status": 200,
+                "data": serializer_.data,
+                "error": "null"
+            }
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context = {
+                "status": 404,
+                "data": "null",
+                "error": f"there is no work for date: {given_date}"
+            }
+            return Response(context, status=status.HTTP_200_OK)
     def get(self, request, format=None):
         today_date = datetime.now().date()
         queryset = models.DailyInfo.objects.all().filter(dayDate = today_date)
-        serializer_ = serializer.DailyInfoSerializer(queryset, many=True)
-        context = {
-            "status": 200,
-            "data": serializer_.data,
-            "error": "null"
-        }
-        return Response(context, status=status.HTTP_200_OK)
+        if queryset:
+            serializer_ = serializer.DailyInfoSerializer(queryset, many=True)
+            context = {
+                "status": 200,
+                "data": serializer_.data,
+                "error": "null"
+            }
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context = {
+                "status": 404,
+                "data": "null",
+                "error": "there is no work today"
+            }
+            return Response(context, status=status.HTTP_200_OK)  
         
 
 
