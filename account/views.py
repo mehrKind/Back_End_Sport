@@ -28,7 +28,6 @@ def All_user(request: Request):
         return Response({"status": 400, "data": "null", "error": "method not allowed"}, status.HTTP_200_OK)
 
 
-
 class UserInformation(APIView):
     def get(self, request, format=None):
         try:
@@ -51,8 +50,6 @@ class UserInformation(APIView):
             return Response({"status":200, "data":combined_data, "error":"null"}, status.HTTP_200_OK)
         except Exception as e:
             return Response({"status":500, "data":None, "error":str(e)}, status.HTTP_200_OK)
-
-
 
 
 # show the all user information => accounts model

@@ -17,7 +17,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class UserProfileSerializer2(serializers.ModelSerializer):
     class Meta:
         model = models.UserProfile
-        fields = ['score']  # Add other fields you want to include here
+        fields = ['score', 'profileImage']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
