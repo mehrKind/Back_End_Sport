@@ -5,7 +5,7 @@ from . import models
 
 # showe user profile
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "gender", "phoneNumber", "birth_date","weight", "height")
+    list_display = ("user", "gender", "phoneNumber", "score","birth_date","weight", "height")
     # search the table with the feilds
     search_fields = ["user__username", "phoneNumber", "city"]
     list_editable = ["phoneNumber", "gender"]

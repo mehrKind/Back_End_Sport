@@ -6,7 +6,7 @@ from account import models
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("username", "first_name", "email", "is_active", "last_login", "date_joined")
+        fields = ("username", "first_name")
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -15,11 +15,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class UserProfileSerializer2(serializers.ModelSerializer):
+    user = UserSerializer()
+
     class Meta:
         model = models.UserProfile
-        fields = ['score', 'profileImage']
+        fields = ['score', 'profileImage', 'user']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        user_data = data.pop('user')
         # Add handling for missing fields here if needed
+        data.update(user_data)
         return data

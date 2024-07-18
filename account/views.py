@@ -355,3 +355,24 @@ class referrerScore(APIView):
         # if there was no person to be the owner of the code OR if the code is not exist
         except ObjectDoesNotExist as e:
             return Response({"status": 404, "data": "null", "error": str(e)}, status.HTTP_200_OK)
+
+# delete account
+class DeleteAccount(APIView):
+    def delete(self, request, format= None):
+        try:
+            user = request.user
+            user.delete()
+            context = {
+                "status" : 204,
+                "data" : f"user {user.username} has deleted successfull !",
+                "error" : "null"
+            }
+            
+            return Response(context, status=status.HTTP_200_OK)
+        except Exception as e:
+            context = {
+                "status" : 400,
+                "data" : "null",
+                "error" : f"{str(e)}"
+            }
+            return Response(context, status=status.HTTP_200_OK)

@@ -6,6 +6,7 @@ from account.models import UserProfile
 
 class DailyInfo(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    score = models.PositiveIntegerField(default=0)
     completeStep = models.PositiveIntegerField()
     traveledDistance = models.FloatField()
     calory = models.PositiveIntegerField()

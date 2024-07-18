@@ -4,15 +4,17 @@ from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import APIView
 from owner import serializer
+from account import serializer as ac_serializer
 from owner import models
 from account.models import UserProfile
-from account.serializer import UserSerializer, UserProfileSerializer2
+from account.serializer import UserSerializer, UserProfileSerializer2, UserProfileSerializer
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from datetime import timedelta, datetime, time
-from django.db.models import Sum
+from django.db.models import Sum, Count, Max, Q
+from django.db.models.functions import TruncWeek
 
 # create a model for the daily user working: create and update
 
@@ -44,7 +46,14 @@ class UserDailyView(APIView):
         data = request.data.copy()
         data['user'] = request.user.id
         serializer_ = serializer.DailyInfoSerializer(data=data)
-        if serializer_.is_valid():
+        userprofile_queryset = UserProfile.objects.filter(user=request.user)
+        profile_instance = get_object_or_404(userprofile_queryset)
+        if userprofile_queryset.exists():
+            new_score = profile_instance.score + request.data.get("score", 0) # sum the existing score with the new score came from request data
+            profile_instance.score = new_score
+            profile_instance.save()
+
+        if serializer_.is_valid(): # serializer to save the new data with the post method
             serializer_.save()
             context = {
                 "status" : 200,
@@ -66,10 +75,19 @@ class UserDailyView(APIView):
             'dayDate': request.data.get('dayDate', timezone.now().date())
         }
         instance = get_object_or_404(queryset, **filter_kwargs)
+        #? update the overall score in the userProfile table
+        userprofile_queryset = UserProfile.objects.filter(user=request.user)
+        profile_instance = get_object_or_404(userprofile_queryset)
+        # if anything was ok, save the update
+        if userprofile_queryset.exists():
+            new_score = profile_instance.score + request.data.get("score", 0) # sum the existing score with the new score came from request data
+            profile_instance.score = new_score
+            profile_instance.save()
         # if there was as item with the given date and user, update it. otherwise, call the post method
         if queryset.exists():
             # Update the instance attributes by summing them with the values from request.data
             request.data["calory"] = instance.calory + request.data.get("calory", 0)
+            request.data["score"] = instance.score + request.data.get("score", 0)
             request.data["completeStep"] = instance.completeStep + request.data.get("completeStep", 0)
             request.data["traveledDistance"] = instance.traveledDistance + request.data.get("traveledDistance", 0)
             # Get the last traveled time from the database
@@ -86,8 +104,9 @@ class UserDailyView(APIView):
 
             request.data["traveledTime"] = new_traveled_time
             
+            # if the user complete the daily steps change the bool object to True, else make it False
             if instance.totalStep <= instance.completeStep:
-                print("yess")
+                request.data["dailyExercise"] = True
             
             serializer_ = serializer.DailyInfoSerializer(instance, data=request.data, partial=True)
             if serializer_.is_valid():
@@ -204,28 +223,157 @@ class HistoryView(APIView):
                 "error": str(e)
             }
             return Response(context, status=status.HTTP_200_OK)
+
+# class Challenge(APIView):
+#     permission_classes = [AllowAny]
+
+#     def get(self, request):
+#         leaderBoardType_request = request.GET.get("leaderBoardType")
+#         if leaderBoardType_request:
+#             leaderBoardType = leaderBoardType_request
+#         else:
+#             leaderBoardType = "weekly"
+
+#         if leaderBoardType == "weekly":
+#             today = timezone.now().date()
+#             start_of_week = today - timedelta(days=today.weekday())  # Start of the current week
+#             end_of_week = start_of_week + timedelta(days=6)  # End of the current week
+
+#             # Calculate weekly scores
+#             weekly_scores = models.DailyInfo.objects.filter(
+#                 dayDate__range=[start_of_week, end_of_week]
+#             ).values('user').annotate(total_score=Sum('score')).order_by('-total_score')
+
+#             # Get user profiles and merge with weekly scores
+#             user_ids = [item['user'] for item in weekly_scores]
+#             user_profiles = UserProfile.objects.filter(user_id__in=user_ids).select_related('user')
+
+#             profile_serializer = UserProfileSerializer2(user_profiles, many=True)
+#             merged_data = []
+
+#             for counter, (profile_data, score_data) in enumerate(zip(profile_serializer.data, weekly_scores), start=1):
+#                 profile_data['score'] = score_data['total_score']
+#                 profile_data['rank'] = counter
+#                 merged_data.append(profile_data)
+
+#             context = {
+#                 "status": 200,
+#                 "data": {
+#                     "leaderBoardType": leaderBoardType,
+#                     "values": merged_data
+#                 },
+#                 "error": "null"
+#             }
+
+#             return Response(context, status=status.HTTP_200_OK)
         
+#         elif leaderBoardType == "overall":
+#             queryset = UserProfile.objects.select_related('user').all().order_by("-score")
+#             challengeSerializer = UserProfileSerializer2(queryset, many=True)
+
+#             # Adding rank to the serialized data
+#             merged_data = []
+#             for counter, data in enumerate(challengeSerializer.data, start=1):
+#                 data["rank"] = counter
+#                 merged_data.append(data)
+
+#             context = {
+#                 "status": 200,
+#                 "data": {
+#                     "leaderBoardType": leaderBoardType,
+#                     "values": merged_data
+#                 },
+#                 "error": "null"
+#             }
+
+#             return Response(context, status=status.HTTP_200_OK)
+#         else:
+#             context = {
+#                 "status": 400,
+#                 "data": "null",
+#                 "error": f"bad request ! choose the correct leader board type. '{leaderBoardType}' is wrong"
+#             }
+
+#             return Response(context, status=status.HTTP_200_OK)
+
+
+
+
+
+
 
 class Challenge(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # queryset = UserProfile.objects.all().order_by("-score")
-        queryset = UserProfile.objects.all().order_by("-score")
-        challengeSerializer = UserProfileSerializer2(queryset, many=True)
-        userQueryset = User.objects.values("username", "first_name", "last_login")
-        userChallengeSerializer = UserSerializer(userQueryset, many=True)
-        # merge two dics togather
-        merged_data = []
-        for profile, user in zip(challengeSerializer.data, userChallengeSerializer.data):
-            merged_item = profile.copy()
-            merged_item.update(user)
-            merged_data.append(merged_item)
+        leaderBoardType_request = request.GET.get("leaderBoardType")
+        if leaderBoardType_request:
+            leaderBoardType = leaderBoardType_request
+        else:
+            leaderBoardType = "weekly"
 
-        context = {
-            "status": 200,
-            "data": merged_data,
-            "error": "null"
-        }
+        if leaderBoardType == "weekly":
+            today = timezone.now().date()
+            start_of_week = today - timedelta(days=today.weekday())  # Start of the current week
+            end_of_week = start_of_week + timedelta(days=6)  # End of the current week
 
-        return Response(context, status=status.HTTP_200_OK)
+            # Calculate weekly scores
+            weekly_scores = models.DailyInfo.objects.filter(
+                dayDate__range=[start_of_week, end_of_week]
+            ).values('user').annotate(total_score=Sum('score')).order_by('-total_score')
+
+            # Get user profiles and merge with weekly scores
+            user_profiles = UserProfile.objects.select_related('user')
+
+            user_profile_dict = {profile.user.id: profile for profile in user_profiles}
+            merged_data = []
+
+            for counter, score_data in enumerate(weekly_scores, start=1):
+                user_id = score_data['user']
+                if user_id in user_profile_dict:
+                    profile = user_profile_dict[user_id]
+                    profile_serializer = UserProfileSerializer2(profile)
+                    profile_data = profile_serializer.data
+                    profile_data['score'] = score_data['total_score']
+                    profile_data['rank'] = counter
+                    merged_data.append(profile_data)
+
+            context = {
+                "status": 200,
+                "data": {
+                    "leaderBoardType": leaderBoardType,
+                    "values": merged_data
+                },
+                "error": "null"
+            }
+
+            return Response(context, status=status.HTTP_200_OK)
+        
+        elif leaderBoardType == "overall":
+            queryset = UserProfile.objects.select_related('user').all().order_by("-score")
+            challengeSerializer = UserProfileSerializer2(queryset, many=True)
+
+            # Adding rank to the serialized data
+            merged_data = []
+            for counter, data in enumerate(challengeSerializer.data, start=1):
+                data["rank"] = counter
+                merged_data.append(data)
+
+            context = {
+                "status": 200,
+                "data": {
+                    "leaderBoardType": leaderBoardType,
+                    "values": merged_data
+                },
+                "error": "null"
+            }
+
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context = {
+                "status": 400,
+                "data": "null",
+                "error": f"bad request ! choose the correct leader board type. '{leaderBoardType}' is wrong"
+            }
+
+            return Response(context, status=status.HTTP_200_OK)

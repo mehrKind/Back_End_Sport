@@ -4,7 +4,7 @@ from . import models
 
 class DailyAdmin(admin.ModelAdmin):
     list_display = ["user", "totalStep", "completeStep",
-                    'traveledDistance', "calory", "dayDate", "dailyExercise"]
+                    'score', "calory", "dayDate", "dailyExercise"]
     search_fields = ["user__username", "dayDate", "user__email"]
     list_editable = ["completeStep"]
     list_display_links = ["user", "dayDate"]

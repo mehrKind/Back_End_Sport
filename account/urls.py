@@ -35,5 +35,6 @@ urlpatterns = [
     path("save_step/", views.SaveSteps.as_view()),
     path("referrer-score/", views.referrerScore.as_view(), name="referrer_score"),
     path("", include(restPassRouter.urls)),
-    path("", include(changePasswordRouter.urls))
+    path("", include(changePasswordRouter.urls)),
+    path("delete", views.DeleteAccount.as_view(), name="delete_account")
 ]

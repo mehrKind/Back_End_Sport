@@ -1,0 +1,44 @@
+[
+    {
+        "url": "http://127.0.0.1:8000//api/v1/accounts/login/",
+        "type": "login",
+        "method": "POST",
+        "body": {
+            "username": "-------",
+            "password": "-------"
+        }
+    },
+    {
+        "url": "http://127.0.0.1:8000//api/v1/accounts/register/",
+        "type": "register",
+        "method": "POST",
+        "body": {
+            "username": "-------",
+            "password": "-------",
+            "first_name": "-------",
+            "email": "-------"
+        }
+    },
+    {
+        "url": "http://127.0.0.1:8000//api/v1/accounts/login/",
+        "type": "login",
+        "method": "POST",
+        "body": {
+            "username": "-------",
+            "password": "-------"
+        }
+    },
+    {
+        "url": "http://127.0.0.1:8000//api/v1/accounts/login/",
+        "type": "login",
+        "method": "POST",
+        "body": {
+            "username": "-------",
+            "password": "-------"
+        }
+    },
+    {
+        "url": "http://127.0.0.1:8000//api/v1/owner/daily_info/",
+        "type": "register"
+    }
+]
