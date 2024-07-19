@@ -19,7 +19,7 @@ class UserProfileSerializer2(serializers.ModelSerializer):
 
     class Meta:
         model = models.UserProfile
-        fields = ['score', 'profileImage', 'user']
+        fields = ['score', 'profileImage', 'user', "level", "weight", "height", "city", "provinces"]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

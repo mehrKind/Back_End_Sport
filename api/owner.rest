@@ -1,3 +1,6 @@
-get http://127.0.0.1:8000/api/v1/accounts/user_profile
-
-
+curl --request GET \
+  --url https://mezbanhabibi.ir/wp-json/wp/v2/users \
+  --header 'content-type: application/json' \
+  --data '{
+	"id" : 1
+}'

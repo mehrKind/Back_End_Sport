@@ -7,7 +7,7 @@ class DailyAdmin(admin.ModelAdmin):
                     'score', "calory", "dayDate", "dailyExercise"]
     search_fields = ["user__username", "dayDate", "user__email"]
     list_editable = ["completeStep"]
-    list_display_links = ["user", "dayDate"]
+    list_display_links = ["user"]
 
     class Meta:
         model = models.DailyInfo
