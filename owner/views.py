@@ -185,7 +185,7 @@ class HistoryView(APIView):
 
                 weekly_history = models.DailyInfo.objects.filter(
                     dayDate__range=[start_of_week, end_of_week]
-                ).order_by('-dayDate')
+                ).order_by('-dayDate').filter(user=request.user)
 
                 Historyserializer = serializer.DailyInfoSerializer(weekly_history, many=True)
 
