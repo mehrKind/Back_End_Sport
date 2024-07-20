@@ -192,24 +192,16 @@ class HistoryView(APIView):
                 context = {
                     "status": 200,
                     "data": Historyserializer.data,
-                    "error": None
+                    "error": "null"
                 }
                 return Response(context, status=status.HTTP_200_OK)
             else:
                 context = {
                     "status": 400,
-                    "data": None,
+                    "data": "null",
                     "error": "Week parameter is missing or invalid"
                 }
                 return Response(context, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            context = {
-                "status": 500,
-                "data": None,
-                "error": str(e)
-            }
-            return Response(context, status=status.HTTP_200_OK)
 
         except Exception as e:
             context = {
@@ -240,17 +232,48 @@ class HistoryView(APIView):
         
         
 # history total items
-# queryset = models.DailyInfo.objects.filter(user=request.user).order_by("-dayDate") # get and sort (date) data from daily table
-# Historyserializer = serializer.DailyInfoSerializer(queryset, many=True) # make the last data as json (serialize)
-# # sum columns
-# totalSteps = queryset.aggregate(Sum('completeStep'))['completeStep__sum'] or 0
-# totalDistance = queryset.aggregate(Sum('traveledDistance'))['traveledDistance__sum'] or 0
-# totalCalory = queryset.aggregate(Sum('calory'))['calory__sum'] or 0
 
-# total_time_seconds = sum([(td.traveledTime.hour * 3600 + td.traveledTime.minute * 60 + td.traveledTime.second) for td in queryset])
+class TotalHistory(APIView):
+    def get(self, request, foramt=None):
+        counter_week = int(request.GET.get("week"))
+        if counter_week:
+            # get date weekly
+            today = timezone.now().date()
+            start_of_week = today - (counter_week * timedelta(days=today.weekday()))
+            end_of_week = start_of_week + timedelta(days= 6 * counter_week)
+            totalQuerySet = models.DailyInfo.objects.filter(dayDate__range = [start_of_week, end_of_week]).order_by("-dayDate").filter(user=request.user) # get and sort (date) data from daily table
+            # sum columns
+            totalSteps = totalQuerySet.aggregate(Sum('completeStep'))['completeStep__sum'] or 0
+            totalDistance = totalQuerySet.aggregate(Sum('traveledDistance'))['traveledDistance__sum'] or 0
+            totalCalory = totalQuerySet.aggregate(Sum('calory'))['calory__sum'] or 0
 
-# total_time_minutes = total_time_seconds // 60
-# total_time_seconds %= 60
+            total_time_seconds = sum([(td.traveledTime.hour * 3600 + td.traveledTime.minute * 60 + td.traveledTime.second) for td in totalQuerySet])
+
+            total_time_minutes = total_time_seconds // 60
+            total_time_seconds %= 60
+        else:
+            context = {
+                "status" : 200,
+                "data": "null",
+                "error": "Week parameter is missing or invalid"
+            }
+            return Response(context, status=status.HTTP_200_OK)
+        
+        context = {
+            "status" : 200,
+            "data": {
+                "totalSteps" : totalSteps,
+                "totalDistance" : totalDistance,
+                "totalCalory" : totalCalory,
+                "travedTime" : f"{total_time_minutes}:{total_time_seconds}",
+                
+                },
+            "error" : "null"
+        }
+        return Response(context, status=status.HTTP_200_OK)
+    
+    
+    
 
 
 class Challenge(APIView):
