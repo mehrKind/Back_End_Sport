@@ -4,3 +4,9 @@ curl --request GET \
   --data '{
 	"id" : 1
 }'
+
+curl --request GET \
+  --url 'https://step.liara.run/api/v1/owner/history/total/?week=1' \
+  --header 'authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzIyMzM1MjY4LCJpYXQiOjE3MjE0NzEyNjgsImp0aSI6IjM1NjQ5MGY2MDkzMTRlMDFhMTliY2VjYWE4MmZhYTVhIiwidXNlcl9pZCI6MjF9.0Vyy4av9C3ui-a8zUtCOusWXrFmLmxpclXIm_yUtkyE'
+
+  
