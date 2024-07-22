@@ -13,7 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from datetime import timedelta, datetime, time
-from django.db.models import Sum, Count, Max, Q
+from django.db.models import Sum, Count, Max, Q, F
 from django.db.models.functions import TruncWeek
 
 # create a model for the daily user working: create and update
@@ -149,7 +149,7 @@ class UserDayInofo(APIView):
             return Response(context, status=status.HTTP_200_OK)
     def get(self, request, format=None):
         today_date = datetime.now().date()
-        queryset = models.DailyInfo.objects.all().filter(dayDate = today_date)
+        queryset = models.DailyInfo.objects.all().filter(dayDate = today_date).filter(user = request.user)
         if queryset:
             serializer_ = serializer.DailyInfoSerializer(queryset, many=True)
             context = {
@@ -167,7 +167,6 @@ class UserDayInofo(APIView):
             return Response(context, status=status.HTTP_200_OK)  
         
 
-
 # history workout
 
 class HistoryView(APIView):
@@ -180,18 +179,19 @@ class HistoryView(APIView):
                 week_counter = int(week_counter)  # Convert week_counter to an integer
 
                 today = timezone.now().date()
-                start_of_week = today - (week_counter * timedelta(days=today.weekday()))  # Start of the custom week
-                end_of_week = start_of_week + timedelta(days=6 * week_counter)  # End of the counter week
+                start_of_week = today - timedelta(days=today.weekday() + 7 * week_counter)  # Start of the custom week
+                end_of_week = start_of_week + timedelta(days=6)  # End of the counter week
 
                 weekly_history = models.DailyInfo.objects.filter(
-                    dayDate__range=[start_of_week, end_of_week]
-                ).order_by('-dayDate').filter(user=request.user)
+                    dayDate__range=[start_of_week, end_of_week],
+                    user=request.user
+                ).order_by('-dayDate')
 
-                Historyserializer = serializer.DailyInfoSerializer(weekly_history, many=True)
+                history_serializer = serializer.DailyInfoSerializer(weekly_history, many=True)
 
                 context = {
                     "status": 200,
-                    "data": Historyserializer.data,
+                    "data": history_serializer.data,
                     "error": "null"
                 }
                 return Response(context, status=status.HTTP_200_OK)
@@ -235,29 +235,16 @@ class HistoryView(APIView):
 
 class TotalHistory(APIView):
     def get(self, request, foramt=None):
-        counter_week = int(request.GET.get("week"))
-        if counter_week:
-            # get date weekly
-            today = timezone.now().date()
-            start_of_week = today - (counter_week * timedelta(days=today.weekday()))
-            end_of_week = start_of_week + timedelta(days= 6 * counter_week)
-            totalQuerySet = models.DailyInfo.objects.filter(dayDate__range = [start_of_week, end_of_week]).order_by("-dayDate").filter(user=request.user) # get and sort (date) data from daily table
-            # sum columns
-            totalSteps = totalQuerySet.aggregate(Sum('completeStep'))['completeStep__sum'] or 0
-            totalDistance = totalQuerySet.aggregate(Sum('traveledDistance'))['traveledDistance__sum'] or 0
-            totalCalory = totalQuerySet.aggregate(Sum('calory'))['calory__sum'] or 0
+        totalQuerySet = models.DailyInfo.objects.all().filter(user=request.user) # get and sort (date) data from daily table
+        # sum columns
+        totalSteps = totalQuerySet.aggregate(Sum('completeStep'))['completeStep__sum'] or 0
+        totalDistance = totalQuerySet.aggregate(Sum('traveledDistance'))['traveledDistance__sum'] or 0
+        totalCalory = totalQuerySet.aggregate(Sum('calory'))['calory__sum'] or 0
 
-            total_time_seconds = sum([(td.traveledTime.hour * 3600 + td.traveledTime.minute * 60 + td.traveledTime.second) for td in totalQuerySet])
+        total_time_seconds = sum([(td.traveledTime.hour * 3600 + td.traveledTime.minute * 60 + td.traveledTime.second) for td in totalQuerySet])
 
-            total_time_minutes = total_time_seconds // 60
-            total_time_seconds %= 60
-        else:
-            context = {
-                "status" : 200,
-                "data": "null",
-                "error": "Week parameter is missing or invalid"
-            }
-            return Response(context, status=status.HTTP_200_OK)
+        total_time_minutes = total_time_seconds // 60
+        total_time_seconds %= 60
         
         context = {
             "status" : 200,
@@ -272,82 +259,128 @@ class TotalHistory(APIView):
         }
         return Response(context, status=status.HTTP_200_OK)
     
-    
-    
-
 
 class Challenge(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
         leaderBoardType_request = request.GET.get("leaderBoardType")
-        if leaderBoardType_request:
-            leaderBoardType = leaderBoardType_request
-        else:
-            leaderBoardType = "weekly"
+        leaderBoardType = leaderBoardType_request if leaderBoardType_request else "weekly"
 
         if leaderBoardType == "weekly":
-            today = timezone.now().date()
-            start_of_week = today - timedelta(days=today.weekday())  # Start of the current week
-            end_of_week = start_of_week + timedelta(days=6)  # End of the current week
+            try:
+                today = timezone.now().date()
+                start_of_week = today - timedelta(days=today.weekday())  # Start of the current week
+                end_of_week = start_of_week + timedelta(days=6)  # End of the current week
 
-            # Calculate weekly scores
-            weekly_scores = models.DailyInfo.objects.filter(
-                dayDate__range=[start_of_week, end_of_week]
-            ).values('user').annotate(total_score=Sum('score')).order_by('-total_score')
+                # Calculate weekly scores and other metrics
+                weekly_aggregates = models.DailyInfo.objects.filter(
+                    dayDate__range=[start_of_week, end_of_week]
+                ).values('user').annotate(
+                    total_score=Sum('score'),
+                    total_complete_step=Sum('completeStep'),
+                    total_traveled_distance=Sum('traveledDistance'),
+                    total_calory=Sum('calory'),
+                    total_traveled_time=Sum(F('traveledTime__hour') * 3600 + F('traveledTime__minute') * 60 + F('traveledTime__second'))  # Sum of traveled time in seconds
+                ).order_by('-total_score')
 
-            # Get user profiles and merge with weekly scores
-            user_profiles = UserProfile.objects.select_related('user')
+                # Get user profiles and merge with weekly aggregates
+                user_profiles = UserProfile.objects.select_related('user')
 
-            user_profile_dict = {profile.user.id: profile for profile in user_profiles}
-            merged_data = []
+                user_profile_dict = {profile.user.id: profile for profile in user_profiles}
+                merged_data = []
 
-            for counter, score_data in enumerate(weekly_scores, start=1):
-                user_id = score_data['user']
-                if user_id in user_profile_dict:
-                    profile = user_profile_dict[user_id]
-                    profile_serializer = UserProfileSerializer2(profile)
-                    profile_data = profile_serializer.data
-                    profile_data['score'] = score_data['total_score']
-                    profile_data['rank'] = counter
-                    merged_data.append(profile_data)
+                for counter, aggregate_data in enumerate(weekly_aggregates, start=1):
+                    user_id = aggregate_data['user']
+                    if user_id in user_profile_dict:
+                        profile = user_profile_dict[user_id]
+                        profile_serializer = UserProfileSerializer2(profile)
+                        profile_data = profile_serializer.data
 
-            context = {
-                "status": 200,
-                "data": {
-                    "leaderBoardType": leaderBoardType,
-                    "values": merged_data
-                },
-                "error": "null"
-            }
+                        # Add the weekly aggregates to the profile data
+                        profile_data['score'] = aggregate_data['total_score']
+                        profile_data['completeStep'] = aggregate_data['total_complete_step']
+                        profile_data['traveledDistance'] = aggregate_data['total_traveled_distance']
+                        profile_data['calory'] = aggregate_data['total_calory']
+                        profile_data['traveledTime'] = aggregate_data['total_traveled_time']
+                        profile_data['rank'] = counter
 
-            return Response(context, status=status.HTTP_200_OK)
+                        merged_data.append(profile_data)
+
+                context = {
+                    "status": 200,
+                    "data": {
+                        "leaderBoardType": "weekly",
+                        "values": merged_data
+                    },
+                    "error": "null"
+                }
+
+                return Response(context, status=status.HTTP_200_OK)
+            except Exception as e:
+                context = {
+                    "status": 500,
+                    "data": "null",
+                    "error": str(e)
+                }
+                return Response(context, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         elif leaderBoardType == "overall":
-            queryset = UserProfile.objects.select_related('user').all().order_by("-score")
-            challengeSerializer = UserProfileSerializer2(queryset, many=True)
+            try:
+                # Calculate overall scores and other metrics
+                overall_aggregates = models.DailyInfo.objects.values('user').annotate(
+                    total_score=Sum('score'),
+                    total_complete_step=Sum('completeStep'),
+                    total_traveled_distance=Sum('traveledDistance'),
+                    total_calory=Sum('calory'),
+                    total_traveled_time=Sum(F('traveledTime__hour') * 3600 + F('traveledTime__minute') * 60 + F('traveledTime__second'))  # Sum of traveled time in seconds
+                ).order_by('-total_score')
 
-            # Adding rank to the serialized data
-            merged_data = []
-            for counter, data in enumerate(challengeSerializer.data, start=1):
-                data["rank"] = counter
-                merged_data.append(data)
+                # Get user profiles and merge with overall aggregates
+                user_profiles = UserProfile.objects.select_related('user')
 
-            context = {
-                "status": 200,
-                "data": {
-                    "leaderBoardType": leaderBoardType,
-                    "values": merged_data
-                },
-                "error": "null"
-            }
+                user_profile_dict = {profile.user.id: profile for profile in user_profiles}
+                merged_data = []
 
-            return Response(context, status=status.HTTP_200_OK)
+                for counter, aggregate_data in enumerate(overall_aggregates, start=1):
+                    user_id = aggregate_data['user']
+                    if user_id in user_profile_dict:
+                        profile = user_profile_dict[user_id]
+                        profile_serializer = UserProfileSerializer2(profile)
+                        profile_data = profile_serializer.data
+
+                        # Add the overall aggregates to the profile data
+                        profile_data['score'] = aggregate_data['total_score']
+                        profile_data['completeStep'] = aggregate_data['total_complete_step']
+                        profile_data['traveledDistance'] = aggregate_data['total_traveled_distance']
+                        profile_data['calory'] = aggregate_data['total_calory']
+                        profile_data['traveledTime'] = aggregate_data['total_traveled_time']
+                        profile_data['rank'] = counter
+
+                        merged_data.append(profile_data)
+
+                context = {
+                    "status": 200,
+                    "data": {
+                        "leaderBoardType": "overall",
+                        "values": merged_data
+                    },
+                    "error": "null"
+                }
+
+                return Response(context, status=status.HTTP_200_OK)
+            except Exception as e:
+                context = {
+                    "status": 500,
+                    "data": "null",
+                    "error": str(e)
+                }
+                return Response(context, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             context = {
                 "status": 400,
                 "data": "null",
-                "error": f"bad request ! choose the correct leader board type. '{leaderBoardType}' is wrong"
+                "error": f"Bad request! Choose the correct leaderboard type. '{leaderBoardType}' is incorrect."
             }
 
-            return Response(context, status=status.HTTP_200_OK)
+            return Response(context, status=status.HTTP_400_BAD_REQUEST)
