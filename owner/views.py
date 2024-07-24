@@ -13,8 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from datetime import timedelta, datetime, time
-from django.db.models import Sum, Count, Max, Q, F
-from django.db.models.functions import TruncWeek
+from django.db.models import Sum, F
 
 # create a model for the daily user working: create and update
 
@@ -261,12 +260,12 @@ class TotalHistory(APIView):
     
 
 class Challenge(APIView):
-    permission_classes = [AllowAny]
+    # permission_classes = [AllowAny]
 
     def get(self, request):
         leaderBoardType_request = request.GET.get("leaderBoardType")
         leaderBoardType = leaderBoardType_request if leaderBoardType_request else "weekly"
-
+        # weekly users informations
         if leaderBoardType == "weekly":
             try:
                 today = timezone.now().date()
@@ -289,6 +288,7 @@ class Challenge(APIView):
 
                 user_profile_dict = {profile.user.id: profile for profile in user_profiles}
                 merged_data = []
+                mySelfInfinormation = {}
 
                 for counter, aggregate_data in enumerate(weekly_aggregates, start=1):
                     user_id = aggregate_data['user']
@@ -306,11 +306,17 @@ class Challenge(APIView):
                         profile_data['rank'] = counter
 
                         merged_data.append(profile_data)
+                # find the user that is online now and get his rank
+                for item in merged_data:
+                    if item["username"] == request.user.username:
+                        mySelfInfinormation = item
+                        break
 
                 context = {
                     "status": 200,
                     "data": {
                         "leaderBoardType": "weekly",
+                        "mySelfInformation" : mySelfInfinormation,
                         "values": merged_data
                     },
                     "error": "null"
@@ -323,8 +329,8 @@ class Challenge(APIView):
                     "data": "null",
                     "error": str(e)
                 }
-                return Response(context, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+                return Response(context, status=status.HTTP_200_OK)
+        # overall inforamtion challenge
         elif leaderBoardType == "overall":
             try:
                 # Calculate overall scores and other metrics
@@ -341,7 +347,7 @@ class Challenge(APIView):
 
                 user_profile_dict = {profile.user.id: profile for profile in user_profiles}
                 merged_data = []
-
+                mySelfInfinormation = {}
                 for counter, aggregate_data in enumerate(overall_aggregates, start=1):
                     user_id = aggregate_data['user']
                     if user_id in user_profile_dict:
@@ -358,12 +364,19 @@ class Challenge(APIView):
                         profile_data['rank'] = counter
 
                         merged_data.append(profile_data)
+                        
+                # find the user that is online now and get his rank
+                for item in merged_data:
+                    if item["username"] == request.user.username:
+                        mySelfInfinormation = item
+                        break
 
                 context = {
                     "status": 200,
                     "data": {
                         "leaderBoardType": "overall",
-                        "values": merged_data
+                        "mySelfInformation" : mySelfInfinormation,
+                        "values": merged_data[:10]
                     },
                     "error": "null"
                 }
@@ -375,7 +388,7 @@ class Challenge(APIView):
                     "data": "null",
                     "error": str(e)
                 }
-                return Response(context, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response(context, status=status.HTTP_200_OK)
         else:
             context = {
                 "status": 400,
@@ -383,4 +396,4 @@ class Challenge(APIView):
                 "error": f"Bad request! Choose the correct leaderboard type. '{leaderBoardType}' is incorrect."
             }
 
-            return Response(context, status=status.HTTP_400_BAD_REQUEST)
+            return Response(context, status=status.HTTP_200_OK)
