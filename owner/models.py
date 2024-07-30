@@ -17,3 +17,12 @@ class DailyInfo(models.Model):
     def totalStep(self):
         userprofile = UserProfile.objects.get(user = self.user)
         return userprofile.purposeSteps
+    
+    # if the user complete the daily steps change the bool object to True, else make it False
+    def save(self, *args, **kwargs):
+        if self.completeStep >= self.totalStep:
+            self.dailyExercise = True
+            return super(DailyInfo, self).save(*args, **kwargs)            
+        else:
+            self.dailyExercise = False
+            return super(DailyInfo, self).save(*args, **kwargs)

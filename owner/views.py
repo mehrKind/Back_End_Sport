@@ -73,7 +73,14 @@ class UserDailyView(APIView):
             'user': request.user,
             'dayDate': request.data.get('dayDate', timezone.now().date())
         }
-        instance = get_object_or_404(queryset, **filter_kwargs)
+        
+        # if there was nothing to update, call the post func and post the request data
+        try:
+            instance = get_object_or_404(queryset, **filter_kwargs)
+        except:
+            return self.post(request, format=format)
+        
+        
         #? update the overall score in the userProfile table
         userprofile_queryset = UserProfile.objects.filter(user=request.user)
         profile_instance = get_object_or_404(userprofile_queryset)
@@ -104,8 +111,8 @@ class UserDailyView(APIView):
             request.data["traveledTime"] = new_traveled_time
             
             # if the user complete the daily steps change the bool object to True, else make it False
-            if instance.totalStep <= instance.completeStep:
-                request.data["dailyExercise"] = True
+            # if instance.totalStep <= instance.completeStep:
+            #     request.data["dailyExercise"] = True
             
             serializer_ = serializer.DailyInfoSerializer(instance, data=request.data, partial=True)
             if serializer_.is_valid():
@@ -153,7 +160,7 @@ class UserDayInofo(APIView):
             serializer_ = serializer.DailyInfoSerializer(queryset, many=True)
             context = {
                 "status": 200,
-                "data": serializer_.data,
+                "data": serializer_.data[0],
                 "error": "null"
             }
             return Response(context, status=status.HTTP_200_OK)
