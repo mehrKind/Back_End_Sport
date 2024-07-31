@@ -3,6 +3,9 @@
         {
             "name": "step-database",
             "mountTo": "database"
+        },{
+            "name": "data",
+            "mountTo": "media"
         }
     ]
 }

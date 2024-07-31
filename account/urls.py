@@ -29,7 +29,7 @@ urlpatterns = [
     path(f'login/', TokenObtainPairView.as_view(), name='token_obtain_pair'), # token
     path("all_users", views.All_user, name="all_users"),
     path("user_info", views.UserInformation.as_view(), name="user_info"),
-    path("user_profile", include(router_profile.urls), name="user_profile_info"),
+    path("user_profile/", include(router_profile.urls), name="user_profile_info"),
     path("user_all_profile", include(allProfileRouter.urls)),
     path("register/", views.RegisterUser.as_view(), name="user_register"),
     path("save_step/", views.SaveSteps.as_view()),

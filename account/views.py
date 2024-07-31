@@ -69,7 +69,17 @@ class UserProfileInformation(viewsets.ModelViewSet):
             return self.get_queryset().first()
         except ObjectDoesNotExist as e:
             return Response({"status": 404, "data": "null", "error": str(e)}, status.HTTP_200_OK)
+        
+    def put(self, request, *args, **kwargs):
+        user_profile = self.get_object()
+        if user_profile is None:
+            return Response({"status": 404, "data": "null", "error": "User profile not found"}, status=status.HTTP_200_OK)
 
+        serializer = self.get_serializer(user_profile, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"status": 200, "data": serializer.data, "error": "null"}, status=status.HTTP_200_OK)
+        return Response({"status": 400, "data": "null", "error": serializer.errors}, status=status.HTTP_200_OK)
 
 # show all profile information with user id
 # todo: NEW UPDATE
