@@ -142,7 +142,7 @@ class UserDayInofo(APIView):
             serializer_ = serializer.DailyInfoSerializer(queryset, many=True)
             context = {
                 "status": 200,
-                "data": serializer_.data,
+                "data": serializer_.data[0],
                 "error": "null"
             }
             return Response(context, status=status.HTTP_200_OK)

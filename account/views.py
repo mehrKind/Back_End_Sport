@@ -34,7 +34,8 @@ class UserInformation(APIView):
             # Query the User model
             user = User.objects.filter(username=request.user.username).first()
             # Query the UserProfile model
-            user_profile = models.UserProfile.objects.filter(user=request.user).first()
+            user_profile = models.UserProfile.objects.filter(
+                user=request.user).first()
 
             # Serialize the data
             user_serializer = UserSerializer(user)
@@ -45,11 +46,12 @@ class UserInformation(APIView):
             else:
                 userProfile = True
             # Combine the serialized data
-            combined_data = {**user_serializer.data, **user_profile_serializer.data, "userProfile": userProfile}
+            combined_data = {**user_serializer.data, **
+                             user_profile_serializer.data, "userProfile": userProfile}
 
-            return Response({"status":200, "data":combined_data, "error":"null"}, status.HTTP_200_OK)
+            return Response({"status": 200, "data": combined_data, "error": "null"}, status.HTTP_200_OK)
         except Exception as e:
-            return Response({"status":500, "data":None, "error":str(e)}, status.HTTP_200_OK)
+            return Response({"status": 500, "data": None, "error": str(e)}, status.HTTP_200_OK)
 
 
 # show the all user information => accounts model
@@ -306,7 +308,8 @@ class SaveSteps(RetrieveUpdateAPIView):
                 else:
                     profileDone = True
 
-                context = {**serializer.data, **{"profileDone":profileDone}} # add profile is done to serializer data
+                # add profile is done to serializer data
+                context = {**serializer.data, **{"profileDone": profileDone}}
                 return Response({"status": 200, "data": context, "error": "null"})
             context = {
                 "status": 400,
@@ -317,7 +320,7 @@ class SaveSteps(RetrieveUpdateAPIView):
         except ObjectDoesNotExist:
             context = {
                 "status": 500,
-                "data":"null",
+                "data": "null",
                 "error": "profile for this user has not created yet :)"
             }
             return Response(context, status.HTTP_200_OK)
@@ -357,22 +360,24 @@ class referrerScore(APIView):
             return Response({"status": 404, "data": "null", "error": str(e)}, status.HTTP_200_OK)
 
 # delete account
+
+
 class DeleteAccount(APIView):
-    def delete(self, request, format= None):
+    def delete(self, request, format=None):
         try:
             user = request.user
             user.delete()
             context = {
-                "status" : 204,
-                "data" : f"user {user.username} has deleted successfull !",
-                "error" : "null"
+                "status": 204,
+                "data": f"user {user.username} has deleted successfully !",
+                "error": "null"
             }
-            
+
             return Response(context, status=status.HTTP_200_OK)
         except Exception as e:
             context = {
-                "status" : 400,
-                "data" : "null",
-                "error" : f"{str(e)}"
+                "status": 400,
+                "data": "null",
+                "error": f"{str(e)}"
             }
             return Response(context, status=status.HTTP_200_OK)
