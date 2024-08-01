@@ -55,33 +55,30 @@ class UserInformation(APIView):
 
 
 # show the all user information => accounts model
-
-class UserProfileInformation(viewsets.ModelViewSet):
-    serializer_class = UserProfileSerializer
-
-    def get_queryset(self):
-        user = self.request.user
-        queryset = models.UserProfile.objects.filter(user=user).all()
-        return queryset
-
-    def get_object(self):
+class UserProfileInformation(APIView):
+    def get(self, request, *args, **kwargs):
+        user = request.user
         try:
-            return self.get_queryset().first()
-        except ObjectDoesNotExist as e:
-            return Response({"status": 404, "data": "null", "error": str(e)}, status.HTTP_200_OK)
-        
-    def put(self, request, *args, **kwargs):
-        user_profile = self.get_object()
-        if user_profile is None:
-            return Response({"status": 404, "data": "null", "error": "User profile not found"}, status=status.HTTP_200_OK)
-
-        serializer = self.get_serializer(user_profile, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
+            user_profile = models.UserProfile.objects.get(user=user)
+            serializer = UserProfileSerializer(user_profile)
             return Response({"status": 200, "data": serializer.data, "error": "null"}, status=status.HTTP_200_OK)
-        return Response({"status": 400, "data": "null", "error": serializer.errors}, status=status.HTTP_200_OK)
+        except models.UserProfile.DoesNotExist:
+            return Response({"status": 404, "data": "null", "error": "User profile not found"}, status=status.HTTP_404_NOT_FOUND)
 
-# show all profile information with user id
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            user_profile = models.UserProfile.objects.get(user=user)
+            serializer = UserProfileSerializer(user_profile, data=request.data, partial=True)  # Use partial=True to allow partial updates
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"status": 200, "data": serializer.data, "error": "null"}, status=status.HTTP_200_OK)
+            return Response({"status": 400, "data": "null", "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except models.UserProfile.DoesNotExist:
+            return Response({"status": 404, "data": "null", "error": "User profile not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
 # todo: NEW UPDATE
 class UserAllProfileInformation(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
@@ -369,8 +366,7 @@ class referrerScore(APIView):
         except ObjectDoesNotExist as e:
             return Response({"status": 404, "data": "null", "error": str(e)}, status.HTTP_200_OK)
 
-# delete account
-
+# delete account 
 
 class DeleteAccount(APIView):
     def delete(self, request, format=None):
