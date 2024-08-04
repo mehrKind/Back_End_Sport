@@ -185,8 +185,11 @@ class HistoryView(APIView):
                 week_counter = int(week_counter)  # Convert week_counter to an integer
 
                 today = timezone.now().date()
+                print(f"today: {today}")
                 start_of_week = today - timedelta(days=today.weekday() + 7 * week_counter)  # Start of the custom week
+                print(f"start_of_week: {start_of_week}")
                 end_of_week = start_of_week + timedelta(days=6)  # End of the counter week
+                print(f"end_of_week: {end_of_week}")
 
                 weekly_history = models.DailyInfo.objects.filter(
                     dayDate__range=[start_of_week, end_of_week],
