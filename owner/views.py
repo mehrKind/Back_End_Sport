@@ -4,15 +4,13 @@ from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import APIView
 from owner import serializer
-from account import serializer as ac_serializer
 from owner import models
 from account.models import UserProfile
-from account.serializer import UserSerializer, UserProfileSerializer2, UserProfileSerializer
-from django.contrib.auth.models import User
+from account.serializer import UserSerializer, UserProfileSerializer2
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from datetime import timedelta, datetime, time
+from datetime import timedelta, datetime
 from django.db.models import Sum, F
 
 # create a model for the daily user working: create and update
@@ -132,6 +130,133 @@ class UserDailyView(APIView):
         else:
             return self.post(request, format=format)
 
+
+# class UserProgress(APIView):
+#     permission_classes = [AllowAny]
+#     def get(self, request):
+#         today = timezone.now().date()
+#         start_of_week = today - timedelta(days=today.weekday())  # Start of the current week
+#         end_of_week = start_of_week + timedelta(days=6)  # End of the current week
+#         percent_list = [] # list of steps percent progress
+#         week_dates = [start_of_week + timedelta(days=i) for i in range(7)] # this week dates
+        
+#         # filter the progress date
+#         user_progress = models.DailyInfo.objects.all().filter(
+#             user=request.user,
+#             dayDate__range = (start_of_week, end_of_week))
+        
+#         # serialize data
+#         user_progress_serializer = serializer.DailyInfoSummarySerializer(user_progress, many=True)
+        
+#         # Create a dictionary for quick lookup
+#         progress_dict = {
+#             entry["dayDate"]: entry for entry in user_progress_serializer.data
+#         }
+
+#         # Iterate through the week_dates
+#         for day in week_dates:
+#             day_str = day.strftime("%Y-%m-%d")
+            
+#             if day_str in progress_dict:
+#                 try:
+#                     complete_step = int(progress_dict[day_str].get("completeStep", 0))
+#                     total_step = int(progress_dict[day_str].get("totalStep", 0))
+                    
+#                     # Avoid division by zero
+#                     if total_step > 0:
+#                         percent = (complete_step / total_step) * 100
+#                         if percent >= 100:
+#                             percent = 100
+#                         percent_list.append(int(percent))
+#                     else:
+#                         percent_list.append(0)
+#                 except (ValueError, KeyError) as e:
+#                     # Handle errors in accessing or converting the values
+#                     percent_list.append(0)  # Default value for errors
+#             else:
+#                 percent_list.append(0)  # No progress for this day
+        
+#         print(percent_list)
+#         # if the user progress is not empty return the data, else show the erorr
+#         if user_progress_serializer.data:
+#             context = {
+#                 "status": 200,
+#                 "data": percent_list,
+#                 "error": "null"
+#             }
+#         else:
+#             context = {
+#                 "status": 204, # no content
+#                 "data" : "null",
+#                 "error": "there is no progress in this week"
+#             }
+        
+#         return Response(context, status=status.HTTP_200_OK)
+
+
+
+
+class UserProgress(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        today = timezone.now().date()
+        
+        # Adjusting to consider Saturday as the first day of the week and Friday as the last
+        start_of_week = today - timedelta(days=(today.weekday() + 2) % 7)  # Start of the current week (Saturday)
+        end_of_week = start_of_week + timedelta(days=6)  # End of the current week (Friday)
+
+        percent_list = []  # List of steps percent progress
+        week_dates = [start_of_week + timedelta(days=i) for i in range(7)]  # This week dates
+        
+        # Filter the progress date
+        user_progress = models.DailyInfo.objects.filter(
+            user=request.user,
+            dayDate__range=(start_of_week, end_of_week)
+        )
+        
+        # Serialize data
+        user_progress_serializer = serializer.DailyInfoSummarySerializer(user_progress, many=True)
+        
+        # Create a dictionary for quick lookup
+        progress_dict = {entry["dayDate"]: entry for entry in user_progress_serializer.data}
+        
+        # Iterate through the week_dates
+        for day in week_dates:
+            day_str = day.strftime("%Y-%m-%d")
+            
+            if day_str in progress_dict:
+                try:
+                    complete_step = int(progress_dict[day_str].get("completeStep", 0))
+                    total_step = int(progress_dict[day_str].get("totalStep", 0))
+                    
+                    # Avoid division by zero
+                    if total_step > 0:
+                        percent = (complete_step / total_step) * 100
+                        percent = min(percent, 100)  # Cap the percentage at 100%
+                        percent_list.append(int(percent))
+                    else:
+                        percent_list.append(0)
+                except (ValueError, KeyError):
+                    percent_list.append(0)  # Default value for errors
+            else:
+                percent_list.append(0)  # No progress for this day
+        
+        # If the user progress is not empty, return the data, else show the error
+        if user_progress_serializer.data:
+            context = {
+                "status": 200,
+                "data": percent_list,
+                "error": "null"
+            }
+        else:
+            context = {
+                "status": 204,  # No content
+                "data": "null",
+                "error": "there is no progress in this week"
+            }
+        
+        return Response(context, status=status.HTTP_200_OK)
 
 # show the user daily information for specefic day
 class UserDayInofo(APIView):

@@ -12,5 +12,6 @@ urlpatterns = [
     path("history/", views.HistoryView.as_view()),
     path("history/total/", views.TotalHistory.as_view()),
     path("history/<int:pk>/delete/", views.HistoryView.as_view(), name='delete_history'),
-    path("challenge/", views.Challenge.as_view())
+    path("challenge/", views.Challenge.as_view()),
+    path("progress/", views.UserProgress.as_view(), name="userProgress")
 ]

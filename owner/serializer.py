@@ -10,3 +10,14 @@ class DailyInfoSerializer(serializers.ModelSerializer):
 
     def get_totalStep(self, obj):
         return obj.totalStep  # Access the totalStep property of the DailyInfo instance
+    
+    
+class DailyInfoSummarySerializer(serializers.ModelSerializer):
+    totalStep = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.DailyInfo
+        fields = ['completeStep', 'totalStep', 'dayDate'] # return just three fields
+
+    def get_totalStep(self, obj):
+        return obj.totalStep  # Access the totalStep property of the DailyInfo instance
