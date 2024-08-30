@@ -153,6 +153,22 @@ class RegisterUser(APIView):
         # get the username and password from request
         password = request.data.get("password")
         username = request.data.get("username")
+        referrerCode = None # at first we dont have any code
+        # if new user had the referrer code, give other user a gift
+        if request.data.get("referrerCode"):
+            referrerCode = request.data.get("referrerCode")
+            # find the user who the owner of the code
+            userProfile = models.UserProfile.objects.get(
+                referrer_code=referrerCode)
+            # gift score number to add
+            GiftScore = 100
+            # get the first score of the user
+            first_score = userProfile.score
+            userProfile.score += GiftScore
+            # update the score field and the some of the score and the  giftScore
+            userProfile.save(update_fields=['score'])
+            
+        
         if UserSerializerData.is_valid():
             user = UserSerializerData.save()
             user.set_password(password)  # set passeord to be hashed
@@ -165,6 +181,12 @@ class RegisterUser(APIView):
                     'phoneNumber': request.data.get('phoneNumber', '')
                 }
             )
+            
+            # now, if we had referrerCode, update the host profile related_referrer
+            if referrerCode:
+                hostUserProfile = models.UserProfile.objects.get(referrer_code=referrerCode)
+                user_id = user.id
+                hostUserProfile.related_referrer.add(user_id)
 
             refresh = RefreshToken.for_user(user)
             response = {
@@ -393,7 +415,6 @@ class referrerScore(APIView):
             GiftScore = 100
             # get the first score of the user
             first_score = userProfile.score
-            # TODO: calculate the user score for 3 days
             userProfile.score += GiftScore
             # update the score field and the some of the score and the  giftScore
             userProfile.save(update_fields=['score'])

@@ -51,6 +51,7 @@ class UserProfile(models.Model):
     boostUser = models.ManyToManyField(BoostUser)
     userProblem = models.TextField(null=True, blank=True)
     referrer_code = models.CharField(default=generate_referrer_code, max_length=7)
+    related_referrer = models.ManyToManyField(User, related_name="related_profiles", blank=True)
 
     def save(self, *args, **kwargs):
         if not self.pk:  # if the object is not in the database yet
