@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.decorators import APIView, api_view, action
 from rest_framework import status
-from account.serializer import UserSerializer, UserProfileSerializer
+from account.serializer import UserSerializer, UserProfileSerializer,UserProfileSerializer2
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -76,6 +76,46 @@ class UserProfileInformation(APIView):
             return Response({"status": 400, "data": "null", "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         except models.UserProfile.DoesNotExist:
             return Response({"status": 404, "data": "null", "error": "User profile not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+# update the user profile
+
+# request for this api:
+# {
+# 	"user": {
+#         "username": "admin",
+#         "first_name": "علیرضا مهربان جهرمی",
+#         "email": "mr.kind1382@gmail.com"
+# 	},
+#     "score": 200,
+#     "profileImage": "/media/media/UserProfile/2018-taylor-swift-9v.jpg",
+#     "level": 2,
+#     "weight": 70,
+#     "height": 180,
+#     "city": "Shiraz",
+#     "provinces": "shiraz Province", 
+# }
+class UpdateUserProfile(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, format=None):
+        user_profile = models.UserProfile.objects.get(user=request.user)
+
+        serializer_ = UserProfileSerializer2(user_profile, data=request.data)
+        if serializer_.is_valid():
+            serializer_.save()
+            context = {
+                "status": 200,
+                "data": serializer_.data,
+                "error": "null"
+            }
+            return Response(context, status=status.HTTP_200_OK)
+        context = {
+            "status": 400,
+            "data": "null",
+            "error": serializer_.errors
+        }
+        return Response(context, status=status.HTTP_200_OK)
 
 
 

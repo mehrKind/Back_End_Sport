@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# todo: ================================= information
+#? name:    alireza mehraban
+#? email:   mr.kind1382@gmail.com
+#? phone:   +989224850196 
+# todo: ================================= information
+
 """Django's command-line utility for administrative tasks."""
 import os
 import sys

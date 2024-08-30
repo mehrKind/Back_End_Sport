@@ -32,6 +32,7 @@ urlpatterns = [
     # path("user_profile/", include(router_profile.urls), name="user_profile_info"),
     path("user_all_profile", include(allProfileRouter.urls)),
     path('user_profile/', views.UserProfileInformation.as_view(), name='user-profile'),
+    path('user-update/', views.UpdateUserProfile.as_view(), name="user-update"),
     path("register/", views.RegisterUser.as_view(), name="user_register"),
     path("save_step/", views.SaveSteps.as_view()),
     path("referrer-score/", views.referrerScore.as_view(), name="referrer_score"),
