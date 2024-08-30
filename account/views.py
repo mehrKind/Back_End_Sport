@@ -95,6 +95,8 @@ class UserProfileInformation(APIView):
 #     "city": "Shiraz",
 #     "provinces": "shiraz Province", 
 # }
+
+
 class UpdateUserProfile(APIView):
     permission_classes = [IsAuthenticated]
 
