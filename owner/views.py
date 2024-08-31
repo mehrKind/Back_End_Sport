@@ -141,8 +141,10 @@ class UserProgress(APIView):
         start_of_week = today - timedelta(days=(today.weekday() + 2) % 7)  # Start of the current week (Saturday)
         end_of_week = start_of_week + timedelta(days=6)  # End of the current week (Friday)
 
-        percent_list = []  # List of steps percent progress
         week_dates = [start_of_week + timedelta(days=i) for i in range(7)]  # This week dates
+        
+        # Initialize percent_list with default values
+        percent_list = [{"percent": 0, "day": int(day.strftime("%d"))} for day in week_dates]
         
         # Filter the progress date
         user_progress = models.DailyInfo.objects.filter(
@@ -156,8 +158,8 @@ class UserProgress(APIView):
         # Create a dictionary for quick lookup
         progress_dict = {entry["dayDate"]: entry for entry in user_progress_serializer.data}
         
-        # Iterate through the week_dates
-        for day in week_dates:
+        # Iterate through the week_dates and update percent_list if data exists
+        for i, day in enumerate(week_dates):
             day_str = day.strftime("%Y-%m-%d")
             
             if day_str in progress_dict:
@@ -169,33 +171,16 @@ class UserProgress(APIView):
                     if total_step > 0:
                         percent = (complete_step / total_step) * 100
                         percent = min(percent, 100)  # Cap the percentage at 100%
-                        percent_list.append({
-                            "percent": int(percent),
-                            "day": int(day_str.split("-")[-1])
-                        })
-                    else:
-                        percent_list.append(0)
+                        percent_list[i]["percent"] = int(percent)  # Update the percent for the specific day
                 except (ValueError, KeyError):
-                    percent_list.append(0)  # Default value for errors
-            else:
-                percent_list.append({
-                    "percent": 0,
-                    "day": int(day_str.split("-")[-1])
-                })
-        
-        # If the user progress is not empty, return the data, else show the error
-        if user_progress_serializer.data:
-            context = {
-                "status": 200,
-                "data": percent_list,
-                "error": "null"
-            }
-        else:
-            context = {
-                "status": 204,  # No content
-                "data": "null",
-                "error": "there is no progress in this week"
-            }
+                    pass  # Keep the default percent value of 0
+
+        # Return the data
+        context = {
+            "status": 200,
+            "data": percent_list,
+            "error": "null"
+        }
         
         return Response(context, status=status.HTTP_200_OK)
 
@@ -305,6 +290,43 @@ class HistoryView(APIView):
             return Response(context, status=status.HTTP_200_OK)
         
         
+
+# invited users
+
+class InvitedUser(APIView):
+    # Get all users who I invited to the app
+    def get(self, request):
+        try:
+            userProfile = models.UserProfile.objects.get(user=request.user)
+            invited_users = userProfile.related_referrer.all()  # Get all users invited by the current user
+            
+            # Prepare a list to hold invited users' data
+            invited_users_data = []
+            
+            for invited_user in invited_users:
+                invited_profile_user = models.UserProfile.objects.get(user=invited_user)
+                invited_users_data.append({
+                    "userId": invited_profile_user.user.id,
+                    "username": invited_profile_user.user.username,
+                    # "fullname": invited_profile_user.user.first_name,
+                    "profileImage": invited_profile_user.profileImage.url if invited_profile_user.profileImage else None,
+                    "level": invited_profile_user.level,
+                    "score": invited_profile_user.score
+                })
+            
+            context = {
+                "status": 200,
+                "data": invited_users_data,
+                "error": "null"
+            }
+            
+            return Response(context, status=status.HTTP_200_OK)
+        
+        except models.UserProfile.DoesNotExist:
+            return Response({"error": "User profile does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         
 # history total items
 
