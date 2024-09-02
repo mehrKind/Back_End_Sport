@@ -39,6 +39,7 @@ class UserProfileSerializer2(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
+        profile_image = serializers.ImageField(required=False)
         # Extract user data from the validated data
         user_data = validated_data.pop('user', None)
 

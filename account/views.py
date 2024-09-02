@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.decorators import APIView, api_view, action
 from rest_framework import status
-from account.serializer import UserSerializer, UserProfileSerializer,UserProfileSerializer2
+from account.serializer import UserSerializer, UserProfileSerializer, UserProfileSerializer2
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -69,7 +69,9 @@ class UserProfileInformation(APIView):
         user = request.user
         try:
             user_profile = models.UserProfile.objects.get(user=user)
-            serializer = UserProfileSerializer(user_profile, data=request.data, partial=True)  # Use partial=True to allow partial updates
+            # Use partial=True to allow partial updates
+            serializer = UserProfileSerializer(
+                user_profile, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response({"status": 200, "data": serializer.data, "error": "null"}, status=status.HTTP_200_OK)
@@ -93,7 +95,7 @@ class UserProfileInformation(APIView):
 #     "weight": 70,
 #     "height": 180,
 #     "city": "Shiraz",
-#     "provinces": "shiraz Province", 
+#     "provinces": "shiraz Province",
 # }
 
 
@@ -118,7 +120,6 @@ class UpdateUserProfile(APIView):
             "error": serializer_.errors
         }
         return Response(context, status=status.HTTP_200_OK)
-
 
 
 # todo: NEW UPDATE
@@ -153,7 +154,7 @@ class RegisterUser(APIView):
         # get the username and password from request
         password = request.data.get("password")
         username = request.data.get("username")
-        referrerCode = None # at first we dont have any code
+        referrerCode = None  # at first we dont have any code
         # if new user had the referrer code, give other user a gift
         if request.data.get("referrerCode"):
             referrerCode = request.data.get("referrerCode")
@@ -167,8 +168,7 @@ class RegisterUser(APIView):
             userProfile.score += GiftScore
             # update the score field and the some of the score and the  giftScore
             userProfile.save(update_fields=['score'])
-            
-        
+
         if UserSerializerData.is_valid():
             user = UserSerializerData.save()
             user.set_password(password)  # set passeord to be hashed
@@ -181,10 +181,11 @@ class RegisterUser(APIView):
                     'phoneNumber': request.data.get('phoneNumber', '')
                 }
             )
-            
+
             # now, if we had referrerCode, update the host profile related_referrer
             if referrerCode:
-                hostUserProfile = models.UserProfile.objects.get(referrer_code=referrerCode)
+                hostUserProfile = models.UserProfile.objects.get(
+                    referrer_code=referrerCode)
                 user_id = user.id
                 hostUserProfile.related_referrer.add(user_id)
 
@@ -429,7 +430,8 @@ class referrerScore(APIView):
         except ObjectDoesNotExist as e:
             return Response({"status": 404, "data": "null", "error": str(e)}, status.HTTP_200_OK)
 
-# delete account 
+# delete account
+
 
 class DeleteAccount(APIView):
     def delete(self, request, format=None):
