@@ -104,22 +104,19 @@ class UpdateUserProfile(APIView):
 
     def put(self, request, format=None):
         user_profile = models.UserProfile.objects.get(user=request.user)
-
-        serializer_ = UserProfileSerializer2(user_profile, data=request.data)
-        if serializer_.is_valid():
-            serializer_.save()
-            context = {
+        serializer = UserProfileSerializer2(user_profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
                 "status": 200,
-                "data": serializer_.data,
+                "data": serializer.data,
                 "error": "null"
-            }
-            return Response(context, status=status.HTTP_200_OK)
-        context = {
+            }, status=status.HTTP_200_OK)
+        return Response({
             "status": 400,
             "data": "null",
-            "error": serializer_.errors
-        }
-        return Response(context, status=status.HTTP_200_OK)
+            "error": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 # todo: NEW UPDATE

@@ -82,3 +82,15 @@ class FriendList(models.Model):
         if friend in self.friends.all():
             return True
         return False
+    
+
+
+# contact us
+class ContactUs(models.Model):
+    user = models.ForeignKey(User, models.CASCADE)
+    email = models.EmailField(max_length=100)
+    textBody = models.TextField()
+    send_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} {self.textBody[:10]}..."

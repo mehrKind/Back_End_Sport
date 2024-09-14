@@ -25,6 +25,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class UserProfileSerializer2(serializers.ModelSerializer):
+    profileImage = serializers.ImageField(required=False)
     user = UserSerializer_email()
 
     class Meta:
@@ -39,7 +40,6 @@ class UserProfileSerializer2(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        profile_image = serializers.ImageField(required=False)
         # Extract user data from the validated data
         user_data = validated_data.pop('user', None)
 
@@ -55,8 +55,12 @@ class UserProfileSerializer2(serializers.ModelSerializer):
             user.save()
 
         # Update UserProfile model fields
+        if 'profileImage' in validated_data:
+            instance.profileImage = validated_data['profileImage']
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
         instance.save()
         return instance
+
