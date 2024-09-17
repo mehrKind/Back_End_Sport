@@ -17,11 +17,12 @@ jsonFile_path = os.path.join(os.path.dirname(__file__), './data/intents.json')
 FILE_path = os.path.join(os.path.dirname(__file__), './data/data.pth')
 
 class SupportView(APIView):
-    permission_classes = [AllowAny]
+    # permission_classes = [AllowAny]
     
     def post(self, request, format=None):
         # user message
         message = request.data.get("message")
+        user = request.user
         
         # Determine the device
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -67,4 +68,29 @@ class SupportView(APIView):
                 bot_response = choice(intent["responses"])
                 break
             
-        return Response({f"{bot_name}":bot_response} ,status.HTTP_200_OK)
+        
+        # save data
+        if bot_response:
+            step_instance = models.StepSupport(
+                sender = user,
+                sender_message = message,
+                receiver_message = bot_response
+            )
+            step_instance.save()
+            
+            context = {
+                "status": 200,
+                "data": bot_response,
+                "error": "null"
+            }
+        else:
+            context = {
+                "status": 404,
+                "data": "null",
+                "error": "we couldn't found any answer"
+            }
+            
+        
+            
+        
+        return Response(context,status.HTTP_200_OK)
