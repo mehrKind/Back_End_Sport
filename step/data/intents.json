@@ -1,0 +1,270 @@
+{
+    "intents": [
+        {
+            "tag": "greeting",
+            "patterns": [
+                "Hi",
+                "How are you?",
+                "Is anyone there?",
+                "Hello",
+                "Good day",
+                "Hey",
+                "What's up?",
+                "Greetings",
+                "Howdy"
+            ],
+            "responses": [
+                "Hello!",
+                "Hi there!",
+                "Greetings!",
+                "How can I help?",
+                "Nice to see you!",
+                "What can I do for you today?"
+            ]
+        },
+        {
+            "tag": "goodbye",
+            "patterns": [
+                "Bye",
+                "See you later",
+                "Goodbye",
+                "Take care",
+                "See you soon",
+                "Catch you later",
+                "I'm off"
+            ],
+            "responses": [
+                "Goodbye!",
+                "See you soon!",
+                "Farewell!",
+                "Take care!",
+                "Have a great day!",
+                "Until next time!"
+            ]
+        },
+        {
+            "tag": "weather",
+            "patterns": [
+                "What's the weather like?",
+                "Tell me the weather",
+                "Weather forecast",
+                "Is it raining?",
+                "Do I need an umbrella?",
+                "What's the temperature today?",
+                "How's the weather outside?"
+            ],
+            "responses": [
+                "I can check the weather for you. Please wait a moment.",
+                "The weather is sunny.",
+                "I don't have access to weather data right now.",
+                "It's a bit cloudy today.",
+                "Expect some rain later in the day.",
+                "The forecast says it will be warm."
+            ]
+        },
+        {
+            "tag": "meeting",
+            "patterns": [
+                "Schedule a meeting",
+                "Book a meeting",
+                "Set up a meeting",
+                "Can we have a meeting?",
+                "I need to arrange a meeting",
+                "Can you help me schedule a meeting?",
+                "Let's have a meeting"
+            ],
+            "responses": [
+                "Sure, when would you like to schedule the meeting?",
+                "I can help with that. What time works for you?",
+                "Please provide the details for the meeting.",
+                "What date do you have in mind?",
+                "I can check my calendar for availability.",
+                "Let me know the participants for the meeting."
+            ]
+        },
+        {
+            "tag": "time",
+            "patterns": [
+                "What time is it?",
+                "Tell me the time",
+                "Current time",
+                "What’s the time now?",
+                "Can you tell me the time?",
+                "How late is it?",
+                "Is it time for lunch?"
+            ],
+            "responses": [
+                "The current time is 2:00 PM.",
+                "I'm unable to provide the current time.",
+                "It's time to get things done!",
+                "Time flies! What do you need help with?",
+                "It's always a good time to ask questions!"
+            ]
+        },
+        {
+            "tag": "thanks",
+            "patterns": [
+                "Thank you",
+                "Thanks",
+                "I appreciate it",
+                "Thanks a lot",
+                "You're the best",
+                "Thanks for your help",
+                "I couldn't have done it without you"
+            ],
+            "responses": [
+                "You're welcome!",
+                "No problem!",
+                "Glad I could help!",
+                "Anytime!",
+                "Happy to assist!",
+                "It was my pleasure!"
+            ]
+        },
+        {
+            "tag": "help",
+            "patterns": [
+                "Help",
+                "I need assistance",
+                "Can you help me?",
+                "I need help",
+                "I'm lost",
+                "Can you guide me?",
+                "What should I do?"
+            ],
+            "responses": [
+                "How can I assist you?",
+                "What do you need help with?",
+                "I'm here to help. What can I do for you?",
+                "Feel free to ask me anything!",
+                "I'm ready to assist you!",
+                "Let me know your questions."
+            ]
+        },
+        {
+            "tag": "about",
+            "patterns": [
+                "Tell me about yourself",
+                "What can you do?",
+                "What is this bot?",
+                "Information about you",
+                "What are your capabilities?",
+                "How can you assist me?",
+                "What services do you offer?",
+                "What is your name?",
+                "Do you have a name?"
+            ],
+            "responses": [
+                "I'm an AI chatbot (Vanila) here to assist you.",
+                "I can help with various tasks. How can I assist you today?",
+                "I'm designed to provide information and help with your questions.",
+                "I can answer questions, provide information, and assist with tasks.",
+                "I'm here to make your life easier!",
+                "Ask me anything, and I'll do my best to help!",
+                "My name is Vanila, how can I help you today?"
+            ]
+        },
+        {
+            "tag": "jokes",
+            "patterns": [
+                "Tell me a joke",
+                "Can you make me laugh?",
+                "I need a joke",
+                "Make me laugh",
+                "Tell me something funny"
+            ],
+            "responses": [
+                "Why don't scientists trust atoms? Because they make up everything!",
+                "I would tell you a pizza joke, but it's too cheesy!",
+                "What do you call fake spaghetti? An impasta!",
+                "Why did the math book look sad? It had too many problems!",
+                "How do you organize a space party? You planet!"
+            ]
+        },
+        {
+            "tag": "motivation",
+            "patterns": [
+                "I need some motivation",
+                "Can you motivate me?",
+                "Tell me something inspiring",
+                "I need a motivational quote",
+                "Give me some encouragement"
+            ],
+            "responses": [
+                "Believe in yourself, and you'll be unstoppable!",
+                "Every day is a new chance to get closer to your goals!",
+                "Success comes to those who persevere, keep going!",
+                "Challenges are what make life interesting. Overcoming them makes life meaningful.",
+                "You're capable of amazing things—don't forget that!"
+            ]
+        },
+        {
+            "tag": "fun_facts",
+            "patterns": [
+                "Tell me a fun fact",
+                "Do you know any interesting facts?",
+                "Surprise me with a fact",
+                "Give me a cool fact",
+                "Tell me something interesting"
+            ],
+            "responses": [
+                "Did you know? Honey never spoils! Archaeologists have found pots of honey in ancient tombs that are over 3,000 years old and still perfectly edible.",
+                "Octopuses have three hearts! Two pump blood to the gills, while one pumps it to the rest of the body.",
+                "Bananas are berries, but strawberries aren't!",
+                "There are more stars in the universe than grains of sand on all the Earth's beaches.",
+                "Sharks existed before trees!"
+            ]
+        },
+        {
+            "tag": "compliments",
+            "patterns": [
+                "Give me a compliment",
+                "Can you say something nice?",
+                "Say something sweet",
+                "Do you think I'm cool?",
+                "Tell me something nice"
+            ],
+            "responses": [
+                "You are amazing just the way you are!",
+                "The world is better because you're in it!",
+                "You're more awesome than you realize!",
+                "Your positivity is contagious!",
+                "You're a star, keep shining!"
+            ]
+        },
+        {
+            "tag": "food_suggestions",
+            "patterns": [
+                "What should I eat?",
+                "Give me a food suggestion",
+                "Can you recommend something to eat?",
+                "I'm hungry, what do you suggest?",
+                "What sounds good for lunch?"
+            ],
+            "responses": [
+                "How about trying some pasta today? It's always a good choice!",
+                "Maybe a nice salad with fresh veggies would be perfect!",
+                "You could never go wrong with a burger!",
+                "How about sushi? It's both healthy and delicious!",
+                "A good pizza never disappoints!"
+            ]
+        },
+        {
+            "tag": "music",
+            "patterns": [
+                "Recommend a song",
+                "What music should I listen to?",
+                "Can you suggest a song?",
+                "I need some music",
+                "Give me a music recommendation"
+            ],
+            "responses": [
+                "How about some chill lo-fi beats to relax?",
+                "If you're feeling energetic, try something upbeat like pop or rock!",
+                "You can never go wrong with a bit of jazz for a calm mood.",
+                "Maybe some classical music if you're in the mood for focus.",
+                "How about some indie hits to discover something new?"
+            ]
+        }
+    ]
+}
