@@ -94,3 +94,15 @@ class SupportView(APIView):
             
         
         return Response(context,status.HTTP_200_OK)
+    
+    
+    
+class SettingsView(APIView):
+    def get(self, request, format=None):
+        context= {
+            "status": 200,
+            "data": "null",
+            "erorr": "null"
+        }
+        
+        return Response(context, status.HTTP_200_OK)

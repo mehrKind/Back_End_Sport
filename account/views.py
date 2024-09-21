@@ -2,7 +2,9 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.decorators import APIView, api_view, action
 from rest_framework import status
-from account.serializer import UserSerializer, UserProfileSerializer, UserProfileSerializer2
+from account.serializer import UserSerializer, UserProfileSerializer, UserProfileSerializer2, UserSerializer_email
+from account.serializer import UserSerializer_email
+
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -34,20 +36,37 @@ class UserInformation(APIView):
             # Query the User model
             user = User.objects.filter(username=request.user.username).first()
             # Query the UserProfile model
-            user_profile = models.UserProfile.objects.filter(
-                user=request.user).first()
+            user_profile = models.UserProfile.objects.filter(user=request.user).first()
 
             # Serialize the data
-            user_serializer = UserSerializer(user)
+            user_serializer = UserSerializer_email(user)
             user_profile_serializer = UserProfileSerializer(user_profile)
-            userProfile = None
-            if user_profile_serializer.data["weight"] is None:
-                userProfile = False
-            else:
-                userProfile = True
+
+            # Check if user profile has weight
+            userProfile = user_profile_serializer.data["weight"] is not None
+
+            sportPlaces = {
+                1: "پارک",
+                2: "فضای بسته",
+                3: "باشگاه",
+                4: "خانه",
+                5: "فضای باز"
+            }
+            # Update sportPlaces based on sportPlaces dictionary
+            sport_places = user_profile_serializer.data["sportPlaces"]
+            for index, sport_place in enumerate(sport_places):
+                if sport_place in sportPlaces:
+                    sport_places[index] = sportPlaces[sport_place]
+
+            # Update the serializer's data with the modified sportPlaces
+            user_profile_serializer.data["sportPlaces"] = sport_places
+
             # Combine the serialized data
-            combined_data = {**user_serializer.data, **
-                             user_profile_serializer.data, "userProfile": userProfile}
+            combined_data = {
+                **user_serializer.data,
+                **user_profile_serializer.data,
+                "userProfile": userProfile
+            }
 
             return Response({"status": 200, "data": combined_data, "error": "null"}, status.HTTP_200_OK)
         except Exception as e:
@@ -78,25 +97,6 @@ class UserProfileInformation(APIView):
             return Response({"status": 400, "data": "null", "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         except models.UserProfile.DoesNotExist:
             return Response({"status": 404, "data": "null", "error": "User profile not found"}, status=status.HTTP_404_NOT_FOUND)
-
-
-# update the user profile
-
-# request for this api:
-# {
-# 	"user": {
-#         "username": "admin",
-#         "first_name": "علیرضا مهربان جهرمی",
-#         "email": "mr.kind1382@gmail.com"
-# 	},
-#     "score": 200,
-#     "profileImage": "/media/media/UserProfile/2018-taylor-swift-9v.jpg",
-#     "level": 2,
-#     "weight": 70,
-#     "height": 180,
-#     "city": "Shiraz",
-#     "provinces": "shiraz Province",
-# }
 
 
 class UpdateUserProfile(APIView):

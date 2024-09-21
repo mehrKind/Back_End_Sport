@@ -11,3 +11,8 @@ class StepSupport(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender} on {self.sender_date}"
+
+
+class Settings(models.Model):
+    label = models.CharField(max_length=250)
+    value = models.CharField(max_length=250)

@@ -30,7 +30,7 @@ class UserProfileSerializer2(serializers.ModelSerializer):
 
     class Meta:
         model = models.UserProfile
-        fields = ['score', 'profileImage', 'user', "level", "weight", "height", "city", "provinces"]
+        fields = ['score', 'profileImage', 'user', "weight", "height", "city", "provinces", "sportPlaces", "weeklyGoal", "phoneNumber", "birth_date", "purposeSteps", "boostUser", "userProblem"]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -42,16 +42,13 @@ class UserProfileSerializer2(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # Extract user data from the validated data
         user_data = validated_data.pop('user', None)
-
+        sport_places = validated_data.pop('sportPlaces', None)
+        boost_User = validated_data.pop('boostUser', None)
         # Update User model fields
         if user_data:
             user = instance.user
-            if 'username' in user_data:
-                user.username = user_data['username']
             if 'first_name' in user_data:
                 user.first_name = user_data['first_name']
-            if 'email' in user_data:
-                user.email = user_data['email']
             user.save()
 
         # Update UserProfile model fields
@@ -60,6 +57,11 @@ class UserProfileSerializer2(serializers.ModelSerializer):
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+            
+        if sport_places is not None:
+            instance.sportPlaces.set(sport_places)
+        if boost_User is not None:
+            instance.boostUser.set(boost_User)
 
         instance.save()
         return instance
