@@ -138,55 +138,34 @@ class UpdateUserProfile(APIView):
         }, status=status.HTTP_200_OK)
 
 
-# todo: NEW UPDATE
+
 class UpdateUserForm(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]  # Require authentication
 
-    def get(self, request):
-        context = {
-            "status": 200,
-            "data": None,
-            "error": None
-        }
-        return Response(context, status=status.HTTP_200_OK)
-
-    def put(self, request):
-        # Use the authenticated user's ID
-        user_instance = request.user
-
-        # Fetch the user profile instance
+    def put(self, request, format=None):
         try:
-            profile_instance = models.UserProfile.objects.get(user=user_instance)
+            profile = models.UserProfile.objects.get(user=request.user)
         except models.UserProfile.DoesNotExist:
-            return Response({
-                "status": 404,
-                "data": None,
-                "error": "User profile not found."
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response({"status": 404, "data": "null", "error": "Profile not found."}, status=status.HTTP_200_OK)
 
-        # Create a serializer instance with the incoming data
-        serializer_ = UserUpdateFormSerializer(data=request.data)
-
-        # Validate the incoming data
-        if serializer_.is_valid():
-            # Update the user and profile instances
-            updated_instances = serializer_.update((user_instance, profile_instance), serializer_.validated_data)
-            return Response({
+        serializer = UserUpdateFormSerializer(profile, data=request.data, partial=True)  # Allow partial updates
+        if serializer.is_valid():
+            print(serializer)
+            serializer.save()
+            context = {
                 "status": 200,
-                "data": {
-                    "user": UserSerializer(updated_instances[0]).data,
-                    "profile": UserProfileSerializer(updated_instances[1]).data
-                },
-                "error": None
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({
-                "status": 400,
-                "data": None,
-                "error": serializer_.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
-            
-            
+                "data": serializer.data,
+                "error": "null"
+            }
+            return Response(context, status=status.HTTP_200_OK)
+
+        context = {
+            "status": 400,
+            "data": "null",
+            "error": serializer.errors
+        }
+        return Response(context, status=status.HTTP_400_BAD_REQUEST)  # Use 400 for bad requests
+
 class UserAllProfileInformation(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     serializer_class = UserProfileSerializer

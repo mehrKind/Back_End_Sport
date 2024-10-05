@@ -69,29 +69,31 @@ class UserProfileSerializer2(serializers.ModelSerializer):
         return instance
 
 
-# Update user information USER table in database
-class UserUpdateFormSerializer(serializers.Serializer):
-    userForm = UserSerializer()  # Use the UserSerializer
-    userProfileForm = UserProfileSerializer()  # Use the UserProfileSerializer
+class UserUpdateFormSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email')
+    first_name = serializers.CharField(source='user.first_name')
+
+    class Meta:
+        model = models.UserProfile
+        fields = ["profileImage", "first_name", "city", "gender", "email"]
 
     def update(self, instance, validated_data):
-        # Extract the nested data
-        userForm_data = validated_data.pop('userForm', None)
-        userProfileForm_data = validated_data.pop('userProfileForm', None)
+        # Extract user data from validated_data
+        user_data = validated_data.pop('user', None)
+        print(f"user_data: {user_data}")
+        # If user data is provided, update the User model
+        if user_data:
+            user = instance.user
+            user.first_name = user_data.get('first_name', user.first_name)
+            user.email = user_data.get("email", user.email)
+            user.save()
+        
+        # Update the UserProfile fields
+        instance.profileImage = validated_data.get('profileImage', instance.profileImage)
+        instance.city = validated_data.get('city', instance.city)
+        instance.gender = validated_data.get('gender', instance.gender)
+        print(instance.user)
+        instance.save()
 
-        # Update User instance
-        if userForm_data:
-            user_instance = instance[0]  # Assuming instance[0] is the User instance
-            for attr, value in userForm_data.items():
-                setattr(user_instance, attr, value)
-            user_instance.save()
-
-        # Update UserProfile instance
-        if userProfileForm_data:
-            profile_instance = instance[1]  # Assuming instance[1] is the UserProfile instance
-            for attr, value in userProfileForm_data.items():
-                setattr(profile_instance, attr, value)
-            profile_instance.save()
 
         return instance
-    
