@@ -4,7 +4,7 @@ from rest_framework.decorators import APIView, api_view, action
 from rest_framework import status
 from account.serializer import UserSerializer, UserProfileSerializer, UserProfileSerializer2, UserSerializer_email
 from account.serializer import UserSerializer_email
-
+from account.serializer import UserUpdateFormSerializer
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -104,7 +104,26 @@ class UpdateUserProfile(APIView):
 
     def put(self, request, format=None):
         user_profile = models.UserProfile.objects.get(user=request.user)
-        serializer = UserProfileSerializer2(user_profile, data=request.data, partial=True)
+        # put the request data into new var that can use it later
+        sportPlaceData = request.data
+        # change the sport place string to its index
+        newSport = []
+        sportPlacesItems = models.SportPlace.objects.all()
+        for index, place in enumerate(sportPlacesItems):
+            print(f"index: {index + 1} | place: {place}")
+            
+        for sportData in sportPlaceData["sportPlaces"]:
+            for index, place in enumerate(sportPlacesItems):
+                if (sportData == place.name):
+                    # print(place.name)
+                    # print(index + 1)
+                    newSport.append(index+1)
+        # if there was any new sport place data, update it then serialize it
+        if len(sportPlaceData) != 0:
+            sportPlaceData["sportPlaces"] = newSport
+        
+        # update the data withe Sport places data instead of request data 
+        serializer = UserProfileSerializer2(user_profile, data=sportPlaceData, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -116,10 +135,58 @@ class UpdateUserProfile(APIView):
             "status": 400,
             "data": "null",
             "error": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+        }, status=status.HTTP_200_OK)
 
 
 # todo: NEW UPDATE
+class UpdateUserForm(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        context = {
+            "status": 200,
+            "data": None,
+            "error": None
+        }
+        return Response(context, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        # Use the authenticated user's ID
+        user_instance = request.user
+
+        # Fetch the user profile instance
+        try:
+            profile_instance = models.UserProfile.objects.get(user=user_instance)
+        except models.UserProfile.DoesNotExist:
+            return Response({
+                "status": 404,
+                "data": None,
+                "error": "User profile not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Create a serializer instance with the incoming data
+        serializer_ = UserUpdateFormSerializer(data=request.data)
+
+        # Validate the incoming data
+        if serializer_.is_valid():
+            # Update the user and profile instances
+            updated_instances = serializer_.update((user_instance, profile_instance), serializer_.validated_data)
+            return Response({
+                "status": 200,
+                "data": {
+                    "user": UserSerializer(updated_instances[0]).data,
+                    "profile": UserProfileSerializer(updated_instances[1]).data
+                },
+                "error": None
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                "status": 400,
+                "data": None,
+                "error": serializer_.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+            
 class UserAllProfileInformation(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     serializer_class = UserProfileSerializer

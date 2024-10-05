@@ -33,6 +33,7 @@ urlpatterns = [
     path("user_all_profile", include(allProfileRouter.urls)),
     path('user_profile/', views.UserProfileInformation.as_view(), name='user-profile'),
     path('user_update/', views.UpdateUserProfile.as_view(), name="user-update"),
+    path('user_update_form/', views.UpdateUserForm.as_view(), name="user-update-info"),
     path("register/", views.RegisterUser.as_view(), name="user_register"),
     path("save_step/", views.SaveSteps.as_view()),
     path("referrer-score/", views.referrerScore.as_view(), name="referrer_score"),
