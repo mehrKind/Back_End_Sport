@@ -3,106 +3,114 @@ from rest_framework.response import Response
 from rest_framework.decorators import APIView
 from rest_framework.permissions import AllowAny
 from step import serializer, models
-from step.nlpFunc import bag_of_words, tokenize, NeuralNet
-import torch
-import json
-import os
-from random import choice
-import nltk
+# from step.nlpFunc import bag_of_words, tokenize, NeuralNet
+# import torch
+# import json
+# import os
+# from random import choice
 
 
 # ai model
 bot_name = "Vanila"
-jsonFile_path = os.path.join(os.path.dirname(__file__), './data/intents.json')
-FILE_path = os.path.join(os.path.dirname(__file__), './data/data.pth')
+# jsonFile_path = os.path.join(os.path.dirname(__file__), './data/intents.json')
+# FILE_path = os.path.join(os.path.dirname(__file__), './data/data.pth')
 
-class SupportView(APIView):
-    # permission_classes = [AllowAny]
+# class SupportView(APIView):
+#     # permission_classes = [AllowAny]
     
-    def post(self, request, format=None):
-        # user message
-        message = request.data.get("message")
-        user = request.user
+#     def post(self, request, format=None):
+#         # user message
+#         message = request.data.get("message")
+#         user = request.user
         
-        # Determine the device
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#         # Determine the device
+#         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        # Load intents
-        with open(jsonFile_path, 'r') as f:
-            intents = json.load(f)
+#         # Load intents
+#         with open(jsonFile_path, 'r') as f:
+#             intents = json.load(f)
 
-        # Load model data with map_location to handle CPU-only environments
-        data = torch.load(FILE_path, map_location=torch.device('cpu'))
+#         # Load model data with map_location to handle CPU-only environments
+#         data = torch.load(FILE_path, map_location=torch.device('cpu'))
 
-        input_size = data["input_size"]
-        hidden_size = data["hidden_size"]
-        output_size = data["output_size"]
-        all_words = data["all_words"]
-        tags = data["tags"]
-        model_state = data["model_state"]
+#         input_size = data["input_size"]
+#         hidden_size = data["hidden_size"]
+#         output_size = data["output_size"]
+#         all_words = data["all_words"]
+#         tags = data["tags"]
+#         model_state = data["model_state"]
 
-        # Initialize the model
-        model = NeuralNet(input_size, hidden_size, output_size).to(device)
-        model.load_state_dict(model_state)
-        model.eval()
+#         # Initialize the model
+#         model = NeuralNet(input_size, hidden_size, output_size).to(device)
+#         model.load_state_dict(model_state)
+#         model.eval()
     
-        # ? main ai 
-        # Tokenize and create bag of words
-        tokenized_message = tokenize(message)
-        X = bag_of_words(tokenized_message, all_words)
-        X = X.reshape(1, X.shape[0])  # Reshape for the model input
-        X = torch.from_numpy(X).to(device)  # Convert to tensor and move to the same device as the model
+#         # ? main ai 
+#         # Tokenize and create bag of words
+#         tokenized_message = tokenize(message)
+#         X = bag_of_words(tokenized_message, all_words)
+#         X = X.reshape(1, X.shape[0])  # Reshape for the model input
+#         X = torch.from_numpy(X).to(device)  # Convert to tensor and move to the same device as the model
 
-        # Get model output
-        output = model(X)
-        _, predicted = torch.max(output, dim=1)  # Get the index of the max log-probability
-        tag = tags[predicted.item()]  # Get the corresponding tag
+#         # Get model output
+#         output = model(X)
+#         _, predicted = torch.max(output, dim=1)  # Get the index of the max log-probability
+#         tag = tags[predicted.item()]  # Get the corresponding tag
 
-        # Calculate probabilities
-        probs = torch.softmax(output, dim=1)
-        prob = probs[0][predicted.item()]
+#         # Calculate probabilities
+#         probs = torch.softmax(output, dim=1)
+#         prob = probs[0][predicted.item()]
 
-        # Check if the probability is above a threshold
-        for intent in intents["intents"]:
-            if tag == intent["tag"]:
-                bot_response = choice(intent["responses"])
-                break
+#         # Check if the probability is above a threshold
+#         for intent in intents["intents"]:
+#             if tag == intent["tag"]:
+#                 bot_response = choice(intent["responses"])
+#                 break
             
         
-        # save data
-        if bot_response:
-            step_instance = models.StepSupport(
-                sender = user,
-                sender_message = message,
-                receiver_message = bot_response
-            )
-            step_instance.save()
+#         # save data
+#         if bot_response:
+#             step_instance = models.StepSupport(
+#                 sender = user,
+#                 sender_message = message,
+#                 receiver_message = bot_response
+#             )
+#             step_instance.save()
             
-            context = {
-                "status": 200,
-                "data": bot_response,
-                "error": "null"
-            }
-        else:
-            context = {
-                "status": 404,
-                "data": "null",
-                "error": "we couldn't found any answer"
-            }
-            
-        
-            
-        
-        return Response(context,status.HTTP_200_OK)
+#             context = {
+#                 "status": 200,
+#                 "data": bot_response,
+#                 "error": "null"
+#             }
+#         else:
+#             context = {
+#                 "status": 404,
+#                 "data": "null",
+#                 "error": "we couldn't found any answer"
+#             }        
+#         return Response(context,status.HTTP_200_OK)
     
-    
-    
+
 class SettingsView(APIView):
     def get(self, request, format=None):
-        context= {
-            "status": 200,
-            "data": "null",
-            "erorr": "null"
-        }
         
-        return Response(context, status.HTTP_200_OK)
+        setting_data = models.Settings.objects.all() # get all data from setting database
+        setting_serializer = serializer.SettingSerializer(setting_data, many=True) # make the data from data to serializer
+        
+        if setting_serializer.is_valid: # if the items be valid, show them in the response
+            context= {
+                "status": 200,
+                "data": setting_serializer.data,
+                "erorr": "null"
+            }
+            
+            return Response(context, status.HTTP_200_OK)
+        else:
+            context= {
+                "status": 400, # bad request
+                "data": "null",
+                "erorr": setting_serializer.errors
+            }
+            
+            return Response(context, status.HTTP_200_OK)
+            

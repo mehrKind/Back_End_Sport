@@ -49,7 +49,10 @@ class UserDailyView(APIView):
         profile_instance = get_object_or_404(userprofile_queryset)
         if userprofile_queryset.exists():
             # sum the existing score with the new score came from request data
-            new_score = profile_instance.score + request.data.get("score", 0)
+            # new_score = profile_instance.score + request.data.get("score", 0)
+
+            new_score = request.data.get("completeStep", 0) // 100 + profile_instance.score
+            print(f"new new score: {new_score}")
             profile_instance.score = new_score
             profile_instance.save()
 
@@ -85,11 +88,6 @@ class UserDailyView(APIView):
         userprofile_queryset = UserProfile.objects.filter(user=request.user)
         profile_instance = get_object_or_404(userprofile_queryset)
         # if anything was ok, save the update
-        if userprofile_queryset.exists():
-            # sum the existing score with the new score came from request data
-            new_score = profile_instance.score + request.data.get("score", 0)
-            profile_instance.score = new_score
-            profile_instance.save()
         # if there was as item with the given date and user, update it. otherwise, call the post method
         if queryset.exists():
             # Update the instance attributes by summing them with the values from request.data
@@ -121,6 +119,14 @@ class UserDailyView(APIView):
             # if the user complete the daily steps change the bool object to True, else make it False
             # if instance.totalStep <= instance.completeStep:
             #     request.data["dailyExercise"] = True
+            if userprofile_queryset.exists():
+                # sum the existing score with the new score came from request data
+                # new_score = profile_instance.score + request.data.get("score", 0)
+                new_score = request.data.get("completeStep") // 100 + profile_instance.score # add 1 score per 100 step
+                # print(f"new score: {new_score}")
+                # print(request.data.get("completeStep"))
+                profile_instance.score = new_score
+                profile_instance.save()
 
             serializer_ = serializer.DailyInfoSerializer(
                 instance, data=request.data, partial=True)
@@ -140,6 +146,24 @@ class UserDailyView(APIView):
             return Response(context, status=status.HTTP_200_OK)
         else:
             return self.post(request, format=format)
+
+
+
+# delete user daily works
+class removeUserDailyView(APIView):
+    permission_classes = [AllowAny]
+    def delete(self, request, id):
+        user = request.user.id
+        userDaily = models.DailyInfo.objects.filter(user= user)
+        context = {
+            "status": 200,
+            "data": "",
+            "error": ""
+        }
+        
+        return Response(context, status.HTTP_200_OK)
+
+
 
 
 class UserProgress(APIView):
@@ -262,14 +286,14 @@ class HistoryView(APIView):
                 week_counter = int(week_counter)
 
                 today = timezone.now().date()
-                print(f"today: {today}")
+                # print(f"today: {today}")
                 # Start of the custom week
                 start_of_week = today - \
                     timedelta(days=today.weekday() + 7 * week_counter)
-                print(f"start_of_week: {start_of_week}")
+                # print(f"start_of_week: {start_of_week}")
                 end_of_week = start_of_week + \
                     timedelta(days=6)  # End of the counter week
-                print(f"end_of_week: {end_of_week}")
+                # print(f"end_of_week: {end_of_week}")
 
                 weekly_history = models.DailyInfo.objects.filter(
                     dayDate__range=[start_of_week, end_of_week],

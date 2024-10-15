@@ -1,13 +1,13 @@
 from django.contrib import admin
 from step import models
 
-class StepSupportAdmin(admin.ModelAdmin):
-    list_display = ["sender", "sender_message", "sender_date"]
-    search_fields = ["sender__username", "sender_date", "sender__email"]
-    list_display_links = ["sender"]
+# class StepSupportAdmin(admin.ModelAdmin):
+#     list_display = ["sender", "sender_message", "sender_date"]
+#     search_fields = ["sender__username", "sender_date", "sender__email"]
+#     list_display_links = ["sender"]
 
-    class Meta:
-        model = models.StepSupport
+#     class Meta:
+#         model = models.StepSupport
         
 class StepSettingsAdmin(admin.ModelAdmin):
     search_fields = ["label", "value"]
@@ -17,5 +17,5 @@ class StepSettingsAdmin(admin.ModelAdmin):
     class Meta:
         model = models.Settings
 
-admin.site.register(models.StepSupport, StepSupportAdmin)
+# admin.site.register(models.StepSupport, StepSupportAdmin)
 admin.site.register(models.Settings, StepSettingsAdmin)

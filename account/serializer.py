@@ -70,8 +70,9 @@ class UserProfileSerializer2(serializers.ModelSerializer):
 
 
 class UserUpdateFormSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(source='user.email')
+    email = serializers.EmailField(source='user.email', required=False)
     first_name = serializers.CharField(source='user.first_name')
+    # profileImage = serializers.ImageField(required=False)
 
     class Meta:
         model = models.UserProfile
@@ -97,3 +98,4 @@ class UserUpdateFormSerializer(serializers.ModelSerializer):
 
 
         return instance
+

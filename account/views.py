@@ -18,7 +18,7 @@ from django.contrib.auth.hashers import make_password
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import RetrieveUpdateAPIView
 from django.core.exceptions import ObjectDoesNotExist
-
+from rest_framework.parsers import MultiPartParser, FormParser
 
 @api_view(["GET"])
 def All_user(request: Request):
@@ -141,6 +141,7 @@ class UpdateUserProfile(APIView):
 
 class UpdateUserForm(APIView):
     permission_classes = [IsAuthenticated]  # Require authentication
+    parser_classes = [MultiPartParser, FormParser]
 
     def put(self, request, format=None):
         try:
@@ -148,13 +149,13 @@ class UpdateUserForm(APIView):
         except models.UserProfile.DoesNotExist:
             return Response({"status": 404, "data": "null", "error": "Profile not found."}, status=status.HTTP_200_OK)
 
-        serializer = UserUpdateFormSerializer(profile, data=request.data, partial=True)  # Allow partial updates
-        if serializer.is_valid():
-            print(serializer)
-            serializer.save()
+        serializer_ = UserUpdateFormSerializer(profile, data=request.data)  # Allow partial updates
+        print(f"request data: {request.data}")
+        if serializer_.is_valid():
+            serializer_.save()
             context = {
                 "status": 200,
-                "data": serializer.data,
+                "data": serializer_.data,
                 "error": "null"
             }
             return Response(context, status=status.HTTP_200_OK)
@@ -162,9 +163,10 @@ class UpdateUserForm(APIView):
         context = {
             "status": 400,
             "data": "null",
-            "error": serializer.errors
+            "error": serializer_.errors
         }
-        return Response(context, status=status.HTTP_400_BAD_REQUEST)  # Use 400 for bad requests
+        print(serializer_.errors)
+        return Response(context, status=status.HTTP_200_OK)  # Use 400 for bad requests
 
 class UserAllProfileInformation(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
