@@ -11,8 +11,7 @@ urlpatterns = [
     path("daily_info/search/", views.UserDayInofo.as_view()),
     path("history/", views.HistoryView.as_view()),
     path("history/total/", views.TotalHistory.as_view()),
-    path("history/<int:pk>/delete/", views.HistoryView.as_view(), name='delete_history'),
+    path("history/delete/<int:pk>/", views.HistoryView.as_view(), name='delete_history'),
     path("challenge/", views.Challenge.as_view()),
     path("progress/", views.UserProgress.as_view(), name="userProgress"),
-    path("invited_users/", views.InvitedUser.as_view(), name="invited_users")
-]
+    path("invited_users/", views.InvitedUser.as_view(), name="invited_users")]

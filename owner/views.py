@@ -42,8 +42,10 @@ class UserDailyView(APIView):
     # create daily work
 
     def post(self, request, format=None):
+        newVar = request.data.get("new", False)
         data = request.data.copy()
         data['user'] = request.user.id
+        
         serializer_ = serializer.DailyInfoSerializer(data=data)
         userprofile_queryset = UserProfile.objects.filter(user=request.user)
         profile_instance = get_object_or_404(userprofile_queryset)
@@ -51,8 +53,7 @@ class UserDailyView(APIView):
             # sum the existing score with the new score came from request data
             # new_score = profile_instance.score + request.data.get("score", 0)
 
-            new_score = request.data.get("completeStep", 0) // 100 + profile_instance.score
-            print(f"new new score: {new_score}")
+            new_score = request.data.get("completeStep") // 100 + profile_instance.score
             profile_instance.score = new_score
             profile_instance.save()
 
@@ -72,99 +73,81 @@ class UserDailyView(APIView):
         return Response(context, status=status.HTTP_200_OK)
 
     def put(self, request, format=None):
+        newVar = request.data.get("new", False)
         queryset = models.DailyInfo.objects.filter(user=request.user)
         filter_kwargs = {
             'user': request.user,
             'dayDate': request.data.get('dayDate', timezone.now().date())
         }
 
-        # if there was nothing to update, call the post func and post the request data
-        try:
-            instance = get_object_or_404(queryset, **filter_kwargs)
-        except:
-            return self.post(request, format=format)
+        # Attempt to get the instance or call post if not found
+        instance = get_object_or_404(queryset, **filter_kwargs)
 
-        # ? update the overall score in the userProfile table
-        userprofile_queryset = UserProfile.objects.filter(user=request.user)
-        profile_instance = get_object_or_404(userprofile_queryset)
-        # if anything was ok, save the update
-        # if there was as item with the given date and user, update it. otherwise, call the post method
-        if queryset.exists():
-            # Update the instance attributes by summing them with the values from request.data
-            request.data["calory"] = instance.calory + \
-                request.data.get("calory", 0)
-            request.data["score"] = instance.score + \
-                request.data.get("score", 0)
-            request.data["completeStep"] = instance.completeStep + \
-                request.data.get("completeStep", 0)
-            request.data["traveledDistance"] = instance.traveledDistance + \
-                request.data.get("traveledDistance", 0)
-            # Get the last traveled time from the database
+        # Get the user profile instance
+        profile_instance = get_object_or_404(UserProfile.objects.filter(user=request.user))
+
+        # Initialize traveled_distance_to_add
+        traveled_distance_to_add = request.data.get("traveledDistance", 0)
+
+        # Convert to float if it's a string
+        if isinstance(traveled_distance_to_add, str):
+            try:
+                traveled_distance_to_add = float(traveled_distance_to_add)
+            except ValueError:
+                traveled_distance_to_add = 0  # Default to 0 if conversion fails
+
+        # Update the instance attributes
+        if not newVar:
+            request.data["calory"] = instance.calory + request.data.get("calory", 0)
+            request.data["score"] = instance.score + request.data.get("score", 0)
+            request.data["completeStep"] = instance.completeStep + request.data.get("completeStep", 0)
+            request.data["traveledDistance"] = instance.traveledDistance + traveled_distance_to_add
+
+            # Update traveled time
             last_traveled_time = instance.traveledTime
+            last_traveled_datetime = datetime.combine(datetime.min, last_traveled_time)
+            new_traveled_datetime = last_traveled_datetime + timedelta(
+                minutes=request.data.get("travelMinutes", 0),
+                seconds=request.data.get("travelSeconds", 0)
+            )
+            request.data["traveledTime"] = new_traveled_datetime.time()
 
-            # Convert the time object to datetime for addition with timedelta
-            last_traveled_datetime = datetime.combine(
-                datetime.min, last_traveled_time)
+        else:  # If newVar is True, just update the profile instance
+            profile_instance.calory = request.data.get("calory", 0)
+            profile_instance.traveledDistance = request.data.get("traveledDistance", 0)
+            profile_instance.traveledTime = request.data.get("traveledTime", None)
 
-            # Calculate the new traveled time by adding minutes and seconds
-            new_traveled_datetime = last_traveled_datetime + \
-                timedelta(minutes=request.data.get("travelMinutes", 0),
-                          seconds=request.data.get("travelSeconds", 0))
+            # Update traveled time
+            last_traveled_time = instance.traveledTime
+            last_traveled_datetime = datetime.combine(datetime.min, last_traveled_time)
+            new_traveled_datetime = last_traveled_datetime + timedelta(
+                minutes=request.data.get("travelMinutes", 0),
+                seconds=request.data.get("travelSeconds", 0)
+            )
+            profile_instance.traveledTime = new_traveled_datetime.time()
 
-            # Extract the time component from the datetime object
-            new_traveled_time = new_traveled_datetime.time()
+        # Calculate the new score based on the complete steps from DailyInfo
+        new_score = instance.score + (instance.completeStep // 100)  # Assuming completeStep is from DailyInfo
+        profile_instance.score = new_score
+        profile_instance.save()
 
-            request.data["traveledTime"] = new_traveled_time
-
-            # if the user complete the daily steps change the bool object to True, else make it False
-            # if instance.totalStep <= instance.completeStep:
-            #     request.data["dailyExercise"] = True
-            if userprofile_queryset.exists():
-                # sum the existing score with the new score came from request data
-                # new_score = profile_instance.score + request.data.get("score", 0)
-                new_score = request.data.get("completeStep") // 100 + profile_instance.score # add 1 score per 100 step
-                # print(f"new score: {new_score}")
-                # print(request.data.get("completeStep"))
-                profile_instance.score = new_score
-                profile_instance.save()
-
-            serializer_ = serializer.DailyInfoSerializer(
-                instance, data=request.data, partial=True)
-            if serializer_.is_valid():
-                serializer_.save()
-                context = {
-                    "status": 200,
-                    "data": serializer_.data,
-                    "error": None
-                }
-                return Response(context, status=status.HTTP_200_OK)
+        # Serialize and save the instance
+        serializer_ = serializer.DailyInfoSerializer(instance, data=request.data, partial=True)
+        if serializer_.is_valid():
+            serializer_.save()
             context = {
-                "status": 400,
-                "data": None,
-                "error": serializer_.errors
+                "status": 200,
+                "data": serializer_.data,
+                "error": None
             }
             return Response(context, status=status.HTTP_200_OK)
-        else:
-            return self.post(request, format=format)
 
-
-
-# delete user daily works
-class removeUserDailyView(APIView):
-    permission_classes = [AllowAny]
-    def delete(self, request, id):
-        user = request.user.id
-        userDaily = models.DailyInfo.objects.filter(user= user)
         context = {
-            "status": 200,
-            "data": "",
-            "error": ""
+            "status": 400,
+            "data": None,
+            "error": serializer_.errors
         }
-        
-        return Response(context, status.HTTP_200_OK)
-
-
-
+        return Response(context, status=status.HTTP_200_OK)
 
 class UserProgress(APIView):
     # permission_classes = [AllowAny]
@@ -279,29 +262,33 @@ class HistoryView(APIView):
     # get method to have all user history, sum details and all daily work
     def get(self, request, format=None):
         try:
-            week_counter = request.GET.get("week")
+            month_counter = request.GET.get("month")
 
-            if week_counter is not None:
-                # Convert week_counter to an integer
-                week_counter = int(week_counter)
+            if month_counter is not None:
+                # Convert month_counter to an integer
+                month_counter = int(month_counter)
 
                 today = timezone.now().date()
-                # print(f"today: {today}")
-                # Start of the custom week
-                start_of_week = today - \
-                    timedelta(days=today.weekday() + 7 * week_counter)
-                # print(f"start_of_week: {start_of_week}")
-                end_of_week = start_of_week + \
-                    timedelta(days=6)  # End of the counter week
-                # print(f"end_of_week: {end_of_week}")
+                # Calculate the first day of the month
+                first_day_of_month = today.replace(day=1, month=today.month - month_counter if today.month - month_counter > 0 else 12)
+                if today.month - month_counter <= 0:
+                    first_day_of_month = first_day_of_month.replace(year=today.year - 1)
 
-                weekly_history = models.DailyInfo.objects.filter(
-                    dayDate__range=[start_of_week, end_of_week],
+                # Calculate the last day of the month
+                if first_day_of_month.month == 12:
+                    last_day_of_month = first_day_of_month.replace(day=31)
+                else:
+                    next_month = first_day_of_month.month + 1
+                    last_day_of_month = (first_day_of_month.replace(month=next_month, day=1) - timedelta(days=1))
+
+                # Query for the user's daily history within the specified month
+                monthly_history = models.DailyInfo.objects.filter(
+                    dayDate__range=[first_day_of_month, last_day_of_month],
                     user=request.user
                 ).order_by('-dayDate')
 
                 history_serializer = serializer.DailyInfoSerializer(
-                    weekly_history, many=True)
+                    monthly_history, many=True)
 
                 context = {
                     "status": 200,
@@ -313,7 +300,7 @@ class HistoryView(APIView):
                 context = {
                     "status": 400,
                     "data": "null",
-                    "error": "Week parameter is missing or invalid"
+                    "error": "Month parameter is missing or invalid"
                 }
                 return Response(context, status=status.HTTP_200_OK)
 
@@ -420,8 +407,7 @@ class TotalHistory(APIView):
                 "totalSteps": totalSteps,
                 "totalDistance": totalDistance,
                 "totalCalory": totalCalory,
-                "travedTime": f"{total_time_minutes}:{total_time_seconds}",
-
+                "traveledTime": f"{total_time_minutes}:{total_time_seconds}",
             },
             "error": "null"
         }

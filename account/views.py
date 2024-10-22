@@ -20,6 +20,7 @@ from rest_framework.generics import RetrieveUpdateAPIView
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.parsers import MultiPartParser, FormParser
 
+
 @api_view(["GET"])
 def All_user(request: Request):
     if request.method == "GET":
@@ -36,7 +37,8 @@ class UserInformation(APIView):
             # Query the User model
             user = User.objects.filter(username=request.user.username).first()
             # Query the UserProfile model
-            user_profile = models.UserProfile.objects.filter(user=request.user).first()
+            user_profile = models.UserProfile.objects.filter(
+                user=request.user).first()
 
             # Serialize the data
             user_serializer = UserSerializer_email(user)
@@ -75,6 +77,7 @@ class UserInformation(APIView):
 
 # show the all user information => accounts model
 class UserProfileInformation(APIView):
+
     def get(self, request, *args, **kwargs):
         user = request.user
         try:
@@ -109,9 +112,7 @@ class UpdateUserProfile(APIView):
         # change the sport place string to its index
         newSport = []
         sportPlacesItems = models.SportPlace.objects.all()
-        for index, place in enumerate(sportPlacesItems):
-            print(f"index: {index + 1} | place: {place}")
-            
+
         for sportData in sportPlaceData["sportPlaces"]:
             for index, place in enumerate(sportPlacesItems):
                 if (sportData == place.name):
@@ -121,9 +122,10 @@ class UpdateUserProfile(APIView):
         # if there was any new sport place data, update it then serialize it
         if len(sportPlaceData) != 0:
             sportPlaceData["sportPlaces"] = newSport
-        
-        # update the data withe Sport places data instead of request data 
-        serializer = UserProfileSerializer2(user_profile, data=sportPlaceData, partial=True)
+
+        # update the data withe Sport places data instead of request data
+        serializer = UserProfileSerializer2(
+            user_profile, data=sportPlaceData, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -138,8 +140,8 @@ class UpdateUserProfile(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class UpdateUserForm(APIView):
+
     permission_classes = [IsAuthenticated]  # Require authentication
     parser_classes = [MultiPartParser, FormParser]
 
@@ -149,9 +151,23 @@ class UpdateUserForm(APIView):
         except models.UserProfile.DoesNotExist:
             return Response({"status": 404, "data": "null", "error": "Profile not found."}, status=status.HTTP_200_OK)
 
-        serializer_ = UserUpdateFormSerializer(profile, data=request.data)  # Allow partial updates
-        print(f"request data: {request.data}")
+        serializer_ = UserUpdateFormSerializer(
+            profile, data=request.data)  # Allow partial updates
         if serializer_.is_valid():
+            # before using serializer.data, you must save the serializer
+            # if you want to access the data of seriazlier, must use serializer.validated_data
+            # get the user information from serializer data
+            user_data = serializer_.validated_data["user"]
+            # print(user_data)
+            try:
+                email = user_data["email"]
+            except:
+                context = {
+                    "status": 404, 
+                    "data": "null", 
+                    "error": "Email is Empty"
+                }
+                return Response(context, status.HTTP_200_OK)
             serializer_.save()
             context = {
                 "status": 200,
@@ -165,8 +181,9 @@ class UpdateUserForm(APIView):
             "data": "null",
             "error": serializer_.errors
         }
-        print(serializer_.errors)
-        return Response(context, status=status.HTTP_200_OK)  # Use 400 for bad requests
+        # Use 400 for bad requests
+        return Response(context, status=status.HTTP_200_OK)
+
 
 class UserAllProfileInformation(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
@@ -187,7 +204,6 @@ class UserAllProfileInformation(viewsets.ModelViewSet):
 
 # registerUser
 
-
 class RegisterUser(APIView):
     # register user class POST method => 201_Createdclass RegisterUser(APIView):
     authentication_classes = []
@@ -206,11 +222,18 @@ class RegisterUser(APIView):
             # find the user who the owner of the code
             userProfile = models.UserProfile.objects.get(
                 referrer_code=referrerCode)
+            
+            
             # gift score number to add
-            GiftScore = 100
+            GiftScore = 20
             # get the first score of the user
             first_score = userProfile.score
             userProfile.score += GiftScore
+            nowUser = models.UserProfile.objects.get(
+                user = request.user
+            )
+            nowUser.score += GiftScore
+            nowUser.save()
             # update the score field and the some of the score and the  giftScore
             userProfile.save(update_fields=['score'])
 
@@ -427,6 +450,7 @@ class SaveSteps(RetrieveUpdateAPIView):
 
                 # add profile is done to serializer data
                 context = {**serializer.data, **{"profileDone": profileDone}}
+                print(f"context: {context}")
                 return Response({"status": 200, "data": context, "error": "null"})
             context = {
                 "status": 400,
